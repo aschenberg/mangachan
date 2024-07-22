@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"manga/api/route"
 	"manga/config"
-
-	"time"
+	"manga/pkg/cache"
+	"manga/pkg/mongodb"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -16,16 +16,15 @@ func main() {
 
 	r := gin.Default()
 
-	app := config.App()
+	cfg := config.GetConfig()
 
-	env := app.Env
-
-	db := app.Mongo.Database(env.DBName)
-
-	timeout := time.Duration(env.ContextTimeout) * time.Second
-	redisClient := config.NewKeyDB(env)
-
-	defer redisClient.Close()
+	db := mongodb.NewMongoDatabase(cfg)
+	mongodb.CloseMongoDBConnection(db)
+	err := cache.InitRedis(cfg)
+	defer cache.CloseRedis()
+	if err != nil {
+		logger.Fatal(logging.Redis, logging.Startup, err.Error(), nil)
+	}
 	// redis := config.NewRedis(redisClient)
 
 	oidcProvider := config.NewOidcProvider(env)

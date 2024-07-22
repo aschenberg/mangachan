@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"manga/config"
 	"time"
 
-	"github.com/casbin/casbin/v2/config"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -64,4 +64,11 @@ func Get[T any](ctx context.Context, c *redis.Client, key string) (T, error) {
 		return dest, err
 	}
 	return dest, nil
+}
+
+func Del[T any](ctx context.Context, c *redis.Client, key string) error {
+	ct, cancel := context.WithTimeout(ctx, 30)
+	defer cancel()
+
+	return c.Del(ct, key).Err()
 }

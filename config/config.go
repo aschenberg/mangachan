@@ -7,6 +7,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Config struct {
+}
+
+type ServerConfig struct {
+	ExternalPort string `mapstructure:"EXTERNAL_PORT"`
+	RunMode      string `mapstructure:"RUN_MODE"`
+}
+
 type Env struct {
 	AppEnv                 string        `mapstructure:"APP_ENV"`
 	ServerAddress          string        `mapstructure:"SERVER_ADDRESS"`

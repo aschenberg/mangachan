@@ -1,0 +1,58 @@
+server:
+  internalPort: 5005
+  externalPort: 5005
+  accessTokenExpireHour: 2
+  refreshTokenExpireHour: 168
+  accessTokenSecret: access_token_secret
+  refreshTokenSecrect: refresh_token_secret
+  runMode: debug
+logger:
+  filePath: ../logs/
+  encoding: json
+  level: debug
+  logger: zap
+cors:
+  allowOrigins: "*"
+# postgres:
+#   host: localhost
+#   port: 5432
+#   user: postgres
+#   password: admin
+#   dbName: car_sale_db
+#   sslMode: disable
+#   maxIdleConns: 15
+#   maxOpenConns: 100
+#   connMaxLifetime: 5
+mongo:
+  host: localhost
+  port: 27017
+  user: aschenberg
+  password: qn8prVZ6Cr75
+  dbName: manga
+redis:
+  host: localhost
+  port: 6379
+  password: 12345678
+  db: 0
+  dialTimeout: 5
+  readTimeout: 5
+  writeTimeout: 5
+  poolSize: 10
+  poolTimeout: 15
+  idleCheckFrequency: 500
+password:
+  includeChars: true
+  includeDigits: true
+  minLength: 6
+  maxLength: 64
+  includeUppercase: true
+  includeLowercase: true
+otp:
+  expireTime: 120
+  digits: 6
+  limiter: 100
+oidc:
+  clientId: 663010130625-gisdnh6i8mh1a6ldd2h0aea9bqiqcur2.apps.googleusercontent.com
+  clientSecret: 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
+  redirectUrl: https://manga-e061a.firebaseapp.com/__/auth/handler
+  issuerUrl: https://accounts.google.com
