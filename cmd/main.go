@@ -7,6 +7,7 @@ import (
 	"manga/config"
 	"manga/pkg/cache"
 	"manga/pkg/mongodb"
+	"manga/pkg/oidc"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -27,11 +28,11 @@ func main() {
 	}
 	// redis := config.NewRedis(redisClient)
 
-	oidcProvider := config.NewOidcProvider(env)
-	oidcCon := config.NewOidcConfig(env, oidcProvider)
+	oidcProvider := oidc.NewOidcProvider(cfg)
+	oidcCon := oidc.NewOidcConfig(cfg, oidcProvider)
 
-	pubsub := redisClient.PSubscribe(context.Background(), "__keyevent@0__:expired")
-
+	client := cache.GetRedis()
+    pubsub := client.PSubscribe(context.Background(), "__keyevent@0__:expired")
 	// Ensure subscription is closed on exit
 	defer pubsub.Close()
 

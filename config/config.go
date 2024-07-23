@@ -1,62 +1,156 @@
 package config
 
 import (
+	"errors"
 	"log"
+	"os"
 	"time"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
+	Server   ServerConfig
+	Mongo    MongoConfig
+	Redis    RedisConfig
+	Password PasswordConfig
+	Cors     CorsConfig
+	Logger   LoggerConfig
+	Otp      OtpConfig
+	Oidc     OIDC
 }
 
 type ServerConfig struct {
-	ExternalPort string `mapstructure:"EXTERNAL_PORT"`
-	RunMode      string `mapstructure:"RUN_MODE"`
+	InternalPort           string
+	ExternalPort           string
+	AccessTokenExpireHour  int
+	RefreshTokenExpireHour int
+	AccessTokenSecret      string
+	RefreshTokenSecret     string
+	RunMode                string
 }
 
-type Env struct {
-	AppEnv                 string        `mapstructure:"APP_ENV"`
-	ServerAddress          string        `mapstructure:"SERVER_ADDRESS"`
-	ContextTimeout         int           `mapstructure:"CONTEXT_TIMEOUT"`
-	MongoAtlas             bool          `mapstructure:"MONGO_ATLAS"`
-	DBUrl                  string        `mapstructure:"DB_URL"`
-	DBHost                 string        `mapstructure:"DB_HOST"`
-	DBPort                 string        `mapstructure:"DB_PORT"`
-	DBUser                 string        `mapstructure:"MONGO_INITDB_ROOT_USERNAME"`
-	DBPass                 string        `mapstructure:"MONGO_INITDB_ROOT_PASSWORD"`
-	DBName                 string        `mapstructure:"MONGO_INITDB_DATABASE"`
-	AccessTokenExpiryHour  int           `mapstructure:"ACCESS_TOKEN_EXPIRY_HOUR"`
-	RefreshTokenExpiryHour int           `mapstructure:"REFRESH_TOKEN_EXPIRY_HOUR"`
-	AccessTokenSecret      string        `mapstructure:"ACCESS_TOKEN_SECRET"`
-	RefreshTokenSecret     string        `mapstructure:"REFRESH_TOKEN_SECRET"`
-	ClientID               string        `mapstructure:"CLIENT_ID"`
-	ClientSecret           string        `mapstructure:"CLIENT_SECRET"`
-	RedirectURL            string        `mapstructure:"REDIRECT_URL"`
-	IssuerURL              string        `mapstructure:"ISSUER_URL"`
-	RedisHost              string        `mapstructure:"REDIS_HOST"`
-	RedisPort              int           `mapstructure:"REDIS_PORT"`
-	RedisPassword          string        `mapstructure:"REDIS_PASSWORD"`
-	RedisContextTime       time.Duration `mapstructure:"REDIS_TIMEOUT"`
+type LoggerConfig struct {
+	FilePath string
+	Encoding string
+	Level    string
+	Logger   string
 }
 
-func NewEnv() *Env {
-	env := Env{}
-	viper.SetConfigFile(".env")
+//	type PostgresConfig struct {
+//		Host            string
+//		Port            string
+//		User            string
+//		Password        string
+//		DbName          string
+//		SSLMode         string
+//		MaxIdleConns    int
+//		MaxOpenConns    int
+//		ConnMaxLifetime time.Duration
+//	}
+type MongoConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	DbName   string
+}
 
-	err := viper.ReadInConfig()
+type RedisConfig struct {
+	Host               string
+	Port               string
+	Password           string
+	Db                 string
+	DialTimeout        time.Duration
+	ReadTimeout        time.Duration
+	WriteTimeout       time.Duration
+	IdleCheckFrequency time.Duration
+	PoolSize           int
+	PoolTimeout        time.Duration
+}
+
+type PasswordConfig struct {
+	IncludeChars     bool
+	IncludeDigits    bool
+	MinLength        int
+	MaxLength        int
+	IncludeUppercase bool
+	IncludeLowercase bool
+}
+
+type CorsConfig struct {
+	AllowOrigins string
+}
+
+type OtpConfig struct {
+	ExpireTime time.Duration
+	Digits     int
+	Limiter    time.Duration
+}
+
+type OIDC struct {
+	ClientId     string
+	ClientSecret string
+	RedirectUrl  string
+	IssuerUrl    string
+}
+
+func GetConfig() *Config {
+	cfgPath := getConfigPath(os.Getenv("APP_ENV"))
+	v, err := LoadConfig(cfgPath, "yml")
 	if err != nil {
-		log.Fatal("Can't find the file .env : ", err)
+		log.Fatalf("Error in load config %v", err)
 	}
 
-	err = viper.Unmarshal(&env)
+	cfg, err := ParseConfig(v)
+	envPort := os.Getenv("PORT")
+	if envPort != "" {
+		cfg.Server.ExternalPort = envPort
+		log.Printf("Set external port from environment -> %s", cfg.Server.ExternalPort)
+	} else {
+		cfg.Server.ExternalPort = cfg.Server.InternalPort
+		log.Printf("Set external port from environment -> %s", cfg.Server.ExternalPort)
+	}
 	if err != nil {
-		log.Fatal("Environment can't be loaded: ", err)
+		log.Fatalf("Error in parse config %v", err)
 	}
 
-	if env.AppEnv == "development" {
-		log.Println("The App is running in development env")
-	}
+	return cfg
+}
 
-	return &env
+func ParseConfig(v *viper.Viper) (*Config, error) {
+	var cfg Config
+	err := v.Unmarshal(&cfg)
+	if err != nil {
+		log.Printf("Unable to parse config: %v", err)
+		return nil, err
+	}
+	return &cfg, nil
+}
+func LoadConfig(filename string, fileType string) (*viper.Viper, error) {
+	v := viper.New()
+	v.SetConfigType(fileType)
+	v.SetConfigName(filename)
+	v.AddConfigPath(".")
+	v.AutomaticEnv()
+
+	err := v.ReadInConfig()
+	if err != nil {
+		log.Printf("Unable to read config: %v", err)
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			return nil, errors.New("config file not found")
+		}
+		return nil, err
+	}
+	return v, nil
+}
+
+func getConfigPath(env string) string {
+	if env == "docker" {
+		return "/app/config/config-docker"
+	} else if env == "production" {
+		return "/config/config-production"
+	} else {
+		return "../config/config-development"
+	}
 }
