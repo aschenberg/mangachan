@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"manga/api"
 	"manga/config"
-	"manga/domain"
-	"manga/domain/dtos"
-	"manga/domain/models"
+	"manga/internal/api"
+	"manga/internal/domain"
+	"manga/internal/domain/dtos"
+	"manga/internal/domain/models"
 	"manga/pkg"
 	"net/http"
 
@@ -18,7 +18,7 @@ import (
 
 type AuthController struct {
 	LoginUsecase domain.LoginUsecase
-	Env          *config.Env
+	Conf         *config.Config
 	Oidc         *oauth2.Config
 	Provider     *oidc.Provider
 }
@@ -47,7 +47,7 @@ func (lc *AuthController) Login(c *gin.Context) {
 	// 	return
 	// }
 
-	verifier := lc.Provider.Verifier(&oidc.Config{ClientID: lc.Env.ClientID})
+	verifier := lc.Provider.Verifier(&oidc.Config{ClientID: lc.Oidc.ClientID})
 
 	idToken, err := verifier.Verify(c, request.IDToken)
 	if err != nil {
@@ -110,14 +110,14 @@ func (lc *AuthController) Login(c *gin.Context) {
 }
 
 func GenerateToken(c *gin.Context, lc *AuthController, usr models.User) {
-	accessToken, err := lc.LoginUsecase.CreateAccessToken(usr, lc.Env.AccessTokenSecret, lc.Env.AccessTokenExpiryHour)
+	accessToken, err := lc.LoginUsecase.CreateAccessToken(usr, lc.Conf.Server.AccessTokenSecret, lc.Conf.Server.AccessTokenExpireHour)
 	if err != nil {
 		api.RenderErrorResponse(c, "Failed create access token: ",
 			pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "Failed create access token: "+err.Error()))
 		return
 	}
 
-	refreshToken, err := lc.LoginUsecase.CreateRefreshToken(usr, lc.Env.RefreshTokenSecret, lc.Env.RefreshTokenExpiryHour)
+	refreshToken, err := lc.LoginUsecase.CreateRefreshToken(usr, lc.Conf.Server.RefreshTokenSecret, lc.Conf.Server.RefreshTokenExpireHour)
 	if err != nil {
 		api.RenderErrorResponse(c, "Failed create refresh token: ",
 			pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "Failed create refresh token: "+err.Error()))

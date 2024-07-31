@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"manga/api/route"
+
 	"manga/config"
+	"manga/internal/api/route"
 	"manga/pkg/cache"
 	"manga/pkg/mongodb"
 	"manga/pkg/oidc"
@@ -24,15 +25,15 @@ func main() {
 	err := cache.InitRedis(cfg)
 	defer cache.CloseRedis()
 	if err != nil {
-		logger.Fatal(logging.Redis, logging.Startup, err.Error(), nil)
+		// logger.Fatal(logging.Redis, logging.Startup, err.Error(), nil)
 	}
 	// redis := config.NewRedis(redisClient)
 
 	oidcProvider := oidc.NewOidcProvider(cfg)
 	oidcCon := oidc.NewOidcConfig(cfg, oidcProvider)
 
-	client := cache.GetRedis()
-    pubsub := client.PSubscribe(context.Background(), "__keyevent@0__:expired")
+	redisC := cache.GetRedis()
+	pubsub := redisC.PSubscribe(context.Background(), "__keyevent@0__:expired")
 	// Ensure subscription is closed on exit
 	defer pubsub.Close()
 
@@ -61,9 +62,9 @@ func main() {
 	// })
 	// CORS
 
-	route.Setup(env, timeout, db, r, oidcCon, oidcProvider, redisClient)
+	route.Setup(cfg, cfg.Mongo.Timeout, db, r, oidcCon, oidcProvider, redisC)
 
-	r.Run(env.ServerAddress)
+	r.Run(cfg.Server.ExternalPort)
 
 }
 

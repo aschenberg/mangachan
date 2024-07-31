@@ -2,8 +2,8 @@ package domain
 
 import (
 	"context"
-	"manga/domain/dtos"
-	"manga/domain/models"
+	"manga/internal/domain/dtos"
+	"manga/internal/domain/models"
 )
 
 type MangaRepository interface {

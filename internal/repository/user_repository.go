@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"manga/db"
-	"manga/domain"
+	"manga/internal/domain"
+	"manga/internal/domain/models"
 
-	"manga/domain/models"
 	"manga/pkg"
 
 	"go.mongodb.org/mongo-driver/bson"

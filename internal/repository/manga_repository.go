@@ -3,8 +3,9 @@ package repository
 import (
 	"context"
 	"manga/db"
-	"manga/domain"
-	"manga/domain/models"
+	"manga/internal/domain"
+	"manga/internal/domain/models"
+
 	"manga/pkg"
 
 	"go.mongodb.org/mongo-driver/bson"

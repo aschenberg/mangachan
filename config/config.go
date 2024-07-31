@@ -54,6 +54,7 @@ type MongoConfig struct {
 	User     string
 	Password string
 	DbName   string
+	Timeout  time.Duration
 }
 
 type RedisConfig struct {

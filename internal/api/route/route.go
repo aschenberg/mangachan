@@ -11,12 +11,12 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func Setup(env *config.Env, timeout time.Duration, db db.MongoDB, gin *gin.Engine, oidc *oauth2.Config, provider *oidc.Provider, redis *redis.Client) {
+func Setup(conf *config.Config, timeout time.Duration, db db.MongoDB, gin *gin.Engine, oidc *oauth2.Config, provider *oidc.Provider, redis *redis.Client) {
 
 	// Al l Public APIs
 	publicV1 := gin.Group("/api/v1/pub")
-	NewAuthRouter(env, timeout, db, publicV1, oidc, provider)
-	NewMangaRouter(env, timeout, db, publicV1, redis)
+	NewAuthRouter(conf, timeout, db, publicV1, oidc, provider)
+	NewMangaRouter(conf, timeout, db, publicV1, redis)
 	// NewLoginRouter(env, timeout, db, publicRouter)
 	// NewRefreshTokenRouter(env, timeout, db, publicRouter)
 	// NewSignoutRouter(publicRouter)

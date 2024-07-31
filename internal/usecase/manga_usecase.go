@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"manga/domain"
-	"manga/domain/dtos"
-	"manga/domain/models"
+
+	"manga/internal/domain"
+	"manga/internal/domain/dtos"
+	"manga/internal/domain/models"
 	"manga/pkg"
 	"manga/pkg/fileutils"
 	"manga/pkg/flake"

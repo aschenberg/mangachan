@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"manga/db/mocks"
-	"manga/domain/models"
-	"manga/repository"
+	"manga/internal/domain/models"
+	"manga/internal/repository"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

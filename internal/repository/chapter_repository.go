@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"manga/db"
-	"manga/domain"
-	"manga/domain/models"
+	"manga/internal/domain"
+	"manga/internal/domain/models"
 )
 
 type chapterRepository struct {
