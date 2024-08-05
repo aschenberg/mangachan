@@ -1,11 +1,12 @@
 package route
 
 import (
+	"manga/api/controller"
 	"manga/config"
 	"manga/db"
-	"manga/internal/api/controller"
 	"manga/internal/domain/models"
-	"manga/internal/repository"
+	"manga/internal/mongodb"
+
 	"manga/internal/usecase"
 
 	"time"
@@ -16,7 +17,7 @@ import (
 )
 
 func NewAuthRouter(conf *config.Config, timeout time.Duration, db db.MongoDB, group *gin.RouterGroup, oidc *oauth2.Config, provider *oidc.Provider) {
-	ur := repository.NewUserRepository(db, models.CollectionUser)
+	ur := mongodb.NewUserRepository(db, models.CollectionUser)
 	lu := usecase.NewLoginUsecase(ur, timeout)
 	lc := &controller.AuthController{
 		LoginUsecase: lu,

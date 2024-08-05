@@ -1,11 +1,12 @@
 package route
 
 import (
+	"manga/api/controller"
 	"manga/config"
 	"manga/db"
-	"manga/internal/api/controller"
+
 	"manga/internal/domain/models"
-	"manga/internal/repository"
+	"manga/internal/mongodb"
 	"manga/internal/usecase"
 
 	"time"
@@ -15,7 +16,7 @@ import (
 )
 
 func NewMangaRouter(env *config.Config, timeout time.Duration, db db.MongoDB, group *gin.RouterGroup, redis *redis.Client) {
-	mr := repository.NewMangaRepository(db, models.CollectionManga)
+	mr := mongodb.NewMangaRepository(db, models.CollectionManga)
 	mu := usecase.NewMangaUsecase(mr, timeout, redis)
 	mc := &controller.MangaController{
 		MangaUsecase: mu,

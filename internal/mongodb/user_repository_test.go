@@ -1,4 +1,4 @@
-package repository_test
+package mongodb
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 
 	"manga/db/mocks"
 	"manga/internal/domain/models"
-	"manga/internal/repository"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +38,7 @@ func TestCreate(t *testing.T) {
 
 		databaseHelper.On("Collection", collectionName).Return(collectionHelper)
 
-		ur := repository.NewUserRepository(databaseHelper, collectionName)
+		ur := NewUserRepository(databaseHelper, collectionName)
 
 		_, err := ur.Create(context.Background(), mockUser)
 
@@ -53,7 +52,7 @@ func TestCreate(t *testing.T) {
 
 		databaseHelper.On("Collection", collectionName).Return(collectionHelper)
 
-		ur := repository.NewUserRepository(databaseHelper, collectionName)
+		ur := NewUserRepository(databaseHelper, collectionName)
 
 		_, err := ur.Create(context.Background(), mockEmptyUser)
 

@@ -1,16 +1,19 @@
 package config
 
 import (
-	"errors"
-	"log"
+	"fmt"
+
 	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
-	"github.com/spf13/viper"
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
 	Server   ServerConfig
+	JWT      JWTConfig
 	Mongo    MongoConfig
 	Redis    RedisConfig
 	Password PasswordConfig
@@ -21,20 +24,23 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	InternalPort           string
-	ExternalPort           string
-	AccessTokenExpireHour  int
-	RefreshTokenExpireHour int
-	AccessTokenSecret      string
-	RefreshTokenSecret     string
-	RunMode                string
+	InternalPort string `env:"INTERNAL_PORT"`
+	ExternalPort string `env:"EXTERNAL_PORT"`
+	RunMode      string `env:"APP_MODE"`
+}
+
+type JWTConfig struct {
+	AccessTokenExpireHour  int    `env:"JWT_ACCESS_EXPIRE"`
+	RefreshTokenExpireHour int    `env:"JWT_REFRESH_EXPIRE"`
+	AccessTokenSecret      string `env:"JWT_ACCESS_SECRET"`
+	RefreshTokenSecret     string `env:"JWT_REFRESH_SECRET"`
 }
 
 type LoggerConfig struct {
-	FilePath string
-	Encoding string
-	Level    string
-	Logger   string
+	FilePath string `env:"JWT_REFRESH_SECRET"`
+	Encoding string `env:"JWT_REFRESH_SECRET"`
+	Level    string `env:"LOG_LEVEL"`
+	Logger   string `env:"JWT_REFRESH_SECRET"`
 }
 
 //	type PostgresConfig struct {
@@ -49,25 +55,25 @@ type LoggerConfig struct {
 //		ConnMaxLifetime time.Duration
 //	}
 type MongoConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DbName   string
-	Timeout  time.Duration
+	Host     string        `env:"MONGO_HOST"`
+	Port     string        `env:"MONGO_PORT"`
+	User     string        `env:"MONGO_USER"`
+	Password string        `env:"MONGO_PASSWORD"`
+	DbName   string        `env:"MONGO_DBNAME"`
+	Timeout  time.Duration `env:"MONGO_TIMEOUT"`
 }
 
 type RedisConfig struct {
-	Host               string
-	Port               string
-	Password           string
-	Db                 string
-	DialTimeout        time.Duration
-	ReadTimeout        time.Duration
-	WriteTimeout       time.Duration
-	IdleCheckFrequency time.Duration
-	PoolSize           int
-	PoolTimeout        time.Duration
+	Host               string        `env:"REDIS_HOST"`
+	Port               string        `env:"REDIS_PORT"`
+	Password           string        `env:"REDIS_PASSWORD"`
+	Db                 string        `env:"REDIS_DB"`
+	DialTimeout        time.Duration `env:"REDIS_DIAL_TIMEOUT"`
+	ReadTimeout        time.Duration `env:"REDIS_READ_TIMEOUT"`
+	WriteTimeout       time.Duration `env:"REDIS_WRITE_TIMEOUT"`
+	IdleCheckFrequency time.Duration `env:"REDIS_IDLE_CHECK_FREQ"`
+	PoolSize           int           `env:"REDIS_POOLSIZE"`
+	PoolTimeout        time.Duration `env:"REDIS_POOL_TIMEOUT"`
 }
 
 type PasswordConfig struct {
@@ -90,68 +96,58 @@ type OtpConfig struct {
 }
 
 type OIDC struct {
-	ClientId     string
-	ClientSecret string
-	RedirectUrl  string
-	IssuerUrl    string
+	ClientId     string `env:"OIDC_CLIENT_ID"`
+	ClientSecret string `env:"OIDC_CLIENT_SECRET"`
+	RedirectUrl  string `env:"OIDC_REDIRECT_URL"`
+	IssuerUrl    string `env:"OIDC_ISSUER"`
 }
 
-func GetConfig() *Config {
-	cfgPath := getConfigPath(os.Getenv("APP_ENV"))
-	v, err := LoadConfig(cfgPath, "yml")
-	if err != nil {
-		log.Fatalf("Error in load config %v", err)
-	}
+func NewConfig() *Config {
+	cfg := &Config{}
+	cwd := projectRoot()
+	envFilePath := cwd + ".env"
 
-	cfg, err := ParseConfig(v)
-	envPort := os.Getenv("PORT")
-	if envPort != "" {
-		cfg.Server.ExternalPort = envPort
-		log.Printf("Set external port from environment -> %s", cfg.Server.ExternalPort)
-	} else {
-		cfg.Server.ExternalPort = cfg.Server.InternalPort
-		log.Printf("Set external port from environment -> %s", cfg.Server.ExternalPort)
-	}
+	err := readEnv(envFilePath, cfg)
 	if err != nil {
-		log.Fatalf("Error in parse config %v", err)
+		panic(err)
 	}
 
 	return cfg
 }
 
-func ParseConfig(v *viper.Viper) (*Config, error) {
-	var cfg Config
-	err := v.Unmarshal(&cfg)
-	if err != nil {
-		log.Printf("Unable to parse config: %v", err)
-		return nil, err
-	}
-	return &cfg, nil
-}
-func LoadConfig(filename string, fileType string) (*viper.Viper, error) {
-	v := viper.New()
-	v.SetConfigType(fileType)
-	v.SetConfigName(filename)
-	v.AddConfigPath(".")
-	v.AutomaticEnv()
+func readEnv(envFilePath string, cfg *Config) error {
+	envFileExists := checkFileExists(envFilePath)
 
-	err := v.ReadInConfig()
-	if err != nil {
-		log.Printf("Unable to read config: %v", err)
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			return nil, errors.New("config file not found")
+	if envFileExists {
+		err := cleanenv.ReadConfig(envFilePath, cfg)
+		if err != nil {
+			return fmt.Errorf("config error: %w", err)
 		}
-		return nil, err
+	} else {
+		err := cleanenv.ReadEnv(cfg)
+		if err != nil {
+
+			if _, statErr := os.Stat(envFilePath + ".example"); statErr == nil {
+				return fmt.Errorf("missing environmentvariables: %w\n\nprovide all required environment variables or rename and update .env.example to .env for convinience", err)
+			}
+
+			return err
+		}
 	}
-	return v, nil
+	return nil
 }
 
-func getConfigPath(env string) string {
-	if env == "docker" {
-		return "/app/config/config-docker"
-	} else if env == "production" {
-		return "/config/config-production"
-	} else {
-		return "../config/config-development"
+func checkFileExists(fileName string) bool {
+	envFileExists := false
+	if _, err := os.Stat(fileName); err == nil {
+		envFileExists = true
 	}
+	return envFileExists
+}
+
+func projectRoot() string {
+	_, b, _, _ := runtime.Caller(0)
+	projectRoot := filepath.Dir(b)
+
+	return projectRoot + "/../"
 }

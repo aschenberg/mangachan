@@ -2,7 +2,8 @@ package controller
 
 import (
 	"manga/config"
-	"manga/internal/api"
+
+	"manga/api"
 	"manga/internal/domain"
 	"manga/internal/domain/dtos"
 	"manga/internal/domain/models"
@@ -91,6 +92,7 @@ func (lc *AuthController) Login(c *gin.Context) {
 				Role:       []string{},
 				GivenName:  claims.GivenName,
 				FamilyName: claims.FamilyName}
+
 			useCreate, err := lc.LoginUsecase.CreateUser(c, usr)
 			if err != nil {
 				api.RenderErrorResponse(c, "An error occurred: ",
@@ -110,14 +112,14 @@ func (lc *AuthController) Login(c *gin.Context) {
 }
 
 func GenerateToken(c *gin.Context, lc *AuthController, usr models.User) {
-	accessToken, err := lc.LoginUsecase.CreateAccessToken(usr, lc.Conf.Server.AccessTokenSecret, lc.Conf.Server.AccessTokenExpireHour)
+	accessToken, err := lc.LoginUsecase.CreateAccessToken(usr, lc.Conf.JWT.AccessTokenSecret, lc.Conf.JWT.AccessTokenExpireHour)
 	if err != nil {
 		api.RenderErrorResponse(c, "Failed create access token: ",
 			pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "Failed create access token: "+err.Error()))
 		return
 	}
 
-	refreshToken, err := lc.LoginUsecase.CreateRefreshToken(usr, lc.Conf.Server.RefreshTokenSecret, lc.Conf.Server.RefreshTokenExpireHour)
+	refreshToken, err := lc.LoginUsecase.CreateRefreshToken(usr, lc.Conf.JWT.RefreshTokenSecret, lc.Conf.JWT.RefreshTokenExpireHour)
 	if err != nil {
 		api.RenderErrorResponse(c, "Failed create refresh token: ",
 			pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "Failed create refresh token: "+err.Error()))

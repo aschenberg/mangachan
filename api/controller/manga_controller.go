@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"manga/internal/api"
+	"manga/api"
 	"manga/internal/domain"
 	"manga/internal/domain/dtos"
 	"manga/pkg"

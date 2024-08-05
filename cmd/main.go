@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"manga/api/route"
 	"manga/config"
-	"manga/internal/api/route"
+
 	"manga/pkg/cache"
 	"manga/pkg/mongodb"
 	"manga/pkg/oidc"
@@ -18,9 +19,10 @@ func main() {
 
 	r := gin.Default()
 
-	cfg := config.GetConfig()
+	cfg := config.NewConfig()
 
 	db := mongodb.NewMongoDatabase(cfg)
+	mongoC := db.Database(cfg.Mongo.DbName)
 	mongodb.CloseMongoDBConnection(db)
 	err := cache.InitRedis(cfg)
 	defer cache.CloseRedis()
@@ -30,7 +32,7 @@ func main() {
 	// redis := config.NewRedis(redisClient)
 
 	oidcProvider := oidc.NewOidcProvider(cfg)
-	oidcCon := oidc.NewOidcConfig(cfg, oidcProvider)
+	oidcConf := oidc.NewOidcConfig(cfg, oidcProvider)
 
 	redisC := cache.GetRedis()
 	pubsub := redisC.PSubscribe(context.Background(), "__keyevent@0__:expired")
@@ -62,7 +64,7 @@ func main() {
 	// })
 	// CORS
 
-	route.Setup(cfg, cfg.Mongo.Timeout, db, r, oidcCon, oidcProvider, redisC)
+	route.Setup(cfg, cfg.Mongo.Timeout, mongoC, r, oidcConf, oidcProvider, redisC)
 
 	r.Run(cfg.Server.ExternalPort)
 

@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"manga/domain/models"
+	"manga/internal/domain/models"
 )
 
 type ChapterRepository interface {
