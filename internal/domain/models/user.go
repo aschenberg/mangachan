@@ -1,18 +1,28 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
-
 const (
 	CollectionUser = "users"
 )
 
 type User struct {
-	ID         primitive.ObjectID `bson:"_id"`
-	AppID      string             `bson:"app_id"`
-	Email      string             `bson:"email"`
-	Picture    string             `bson:"picture"`
-	Role       []string           `bson:"role"`
-	GivenName  string             `bson:"given_name"`
-	FamilyName string             `bson:"family_name"`
-	Name       string             `bson:"name"`
+	ID           string   `json:"_id,omitempty"`
+	Key          string   `json:"_key,omitempty"`
+	AppID        string   `json:"app_id"`
+	Email        string   `json:"email"`
+	Picture      string   `json:"picture"`
+	Role         []string `json:"role"`
+	GivenName    string   `json:"given_name"`
+	FamilyName   string   `json:"family_name"`
+	Name         string   `json:"name"`
+	RefreshToken string   `json:"refresh_token"`
+}
+type UserCreated struct {
+	AppID        string   `json:"app_id"`
+	Email        string   `json:"email"`
+	Picture      string   `json:"picture"`
+	Role         []string `json:"role"`
+	GivenName    string   `json:"given_name"`
+	FamilyName   string   `json:"family_name"`
+	Name         string   `json:"name"`
+	RefreshToken string   `json:"refresh_token"`
 }

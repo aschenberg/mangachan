@@ -1,29 +1,22 @@
 package route
 
 import (
-	"manga/api/controller"
+	"manga/api/handler"
 	"manga/config"
-	"manga/db"
-	"manga/internal/domain/models"
-	"manga/internal/mongodb"
-
+	"manga/internal/domain"
+	"manga/internal/infra/ard"
 	"manga/internal/usecase"
-
 	"time"
 
+	"github.com/arangodb/go-driver/v2/arangodb"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
 )
 
-func NewAuthRouter(conf *config.Config, timeout time.Duration, db db.MongoDB, group *gin.RouterGroup, oidc *oauth2.Config, provider *oidc.Provider) {
-	ur := mongodb.NewUserRepository(db, models.CollectionUser)
-	lu := usecase.NewLoginUsecase(ur, timeout)
-	lc := &controller.AuthController{
-		LoginUsecase: lu,
-		Conf:         conf,
-		Oidc:         oidc,
-		Provider:     provider,
-	}
-	group.POST("/authenticate", lc.Login)
+func Auth(group *gin.RouterGroup, cfg *config.Config, db arangodb.Database, oidcCfg *oauth2.Config, provider *oidc.Provider) {
+	ar := ard.NewUserRepository(db, domain.CollectionUser)
+	au := usecase.NewLoginUsecase(ar, 10*time.Second)
+	ah := handler.NewAuthHandler(au, cfg, oidcCfg, provider)
+	group.POST("/login", ah.Login)
 }

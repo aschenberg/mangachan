@@ -15,7 +15,7 @@ func CreateAccessToken(user models.User, secret string, expiry int) (accessToken
 	claims := &models.JwtCustomClaims{
 		Role: user.Role,
 		MapClaims: jwt.MapClaims{
-			"sub":  user.ID.Hex(),
+			"sub":  user.ID,
 			"name": user.GivenName + user.FamilyName,
 			"iat":  now,
 			"exp":  exp,
@@ -35,7 +35,7 @@ func CreateRefreshToken(user models.User, secret string, expiry int) (refreshTok
 	claimsRefresh := &models.JwtCustomRefreshClaims{
 		Role: user.Role,
 		MapClaims: jwt.MapClaims{
-			"sub":  user.ID.Hex(),
+			"sub":  user.ID,
 			"name": user.GivenName + user.FamilyName,
 			"iat":  now,
 			"exp":  exp,

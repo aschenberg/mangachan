@@ -14,7 +14,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	JWT      JWTConfig
-	Mongo    MongoConfig
+	Arango   ArangoConfig
 	Redis    RedisConfig
 	Password PasswordConfig
 	Cors     CorsConfig
@@ -30,17 +30,17 @@ type ServerConfig struct {
 }
 
 type JWTConfig struct {
-	AccessTokenExpireHour  int    `env:"JWT_ACCESS_EXPIRE"`
-	RefreshTokenExpireHour int    `env:"JWT_REFRESH_EXPIRE"`
-	AccessTokenSecret      string `env:"JWT_ACCESS_SECRET"`
-	RefreshTokenSecret     string `env:"JWT_REFRESH_SECRET"`
+	AccessTokenExpireHour  int    `env:"JWT_ACCESS_TOKEN_EXPIRY_HOUR"`
+	RefreshTokenExpireHour int    `env:"JWT_REFRESH_TOKEN_EXPIRY_HOUR"`
+	AccessTokenSecret      string `env:"JWT_ACCESS_TOKEN_SECRET"`
+	RefreshTokenSecret     string `env:"JWT_REFRESH_TOKEN_SECRET"`
 }
 
 type LoggerConfig struct {
 	FilePath string `env:"JWT_REFRESH_SECRET"`
 	Encoding string `env:"JWT_REFRESH_SECRET"`
 	Level    string `env:"LOG_LEVEL"`
-	Logger   string `env:"JWT_REFRESH_SECRET"`
+	Logger   string `env:"LOGGER"`
 }
 
 //	type PostgresConfig struct {
@@ -54,13 +54,13 @@ type LoggerConfig struct {
 //		MaxOpenConns    int
 //		ConnMaxLifetime time.Duration
 //	}
-type MongoConfig struct {
-	Host     string        `env:"MONGO_HOST"`
-	Port     string        `env:"MONGO_PORT"`
-	User     string        `env:"MONGO_USER"`
-	Password string        `env:"MONGO_PASSWORD"`
-	DbName   string        `env:"MONGO_DBNAME"`
-	Timeout  time.Duration `env:"MONGO_TIMEOUT"`
+type ArangoConfig struct {
+	Host     string        `env:"ARANGO_HOST"`
+	Port     string        `env:"ARANGO_PORT"`
+	User     string        `env:"ARANGO_USERNAME"`
+	Password string        `env:"ARANGO_ROOT_PASSWORD"`
+	DbName   string        `env:"ARANGO_DBNAME"`
+	Timeout  time.Duration `env:"ARANGO_TIMEOUT"`
 }
 
 type RedisConfig struct {
@@ -99,7 +99,7 @@ type OIDC struct {
 	ClientId     string `env:"OIDC_CLIENT_ID"`
 	ClientSecret string `env:"OIDC_CLIENT_SECRET"`
 	RedirectUrl  string `env:"OIDC_REDIRECT_URL"`
-	IssuerUrl    string `env:"OIDC_ISSUER"`
+	IssuerUrl    string `env:"OIDC_ISSUER_URL"`
 }
 
 func NewConfig() *Config {

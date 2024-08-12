@@ -13,74 +13,26 @@ services:
     ports:
       - 6379:6379
     restart: unless-stopped
-  mongodb:
-    image: mongo:6.0
-    container_name: mongo-manga
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
-    networks:
-      - app_network
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-  
-  # postgre:
-  #   image: postgres:15.3-alpine
-  #   container_name: postgres
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} 
-  #     POSTGRES_DB: ${POSTGRES_DB}
-  #   ports:
-  #     - "3333:5432"
-  #   networks:
-  #     - app_network
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ['CMD', 'pg_isready', '-U', 'aschenberg', '-d', 'supertokens']
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
 
-  # supertokens:
-  #   # image: registry.supertokens.io/supertokens/supertokens-mongodb
-  #   image: registry.supertokens.io/supertokens/supertokens-postgresql:9.0.2
-  #   container_name: supertokens
-  #   environment:
-  #     # MONGODB_CONNECTION_URI: mongodb://supertokens:password@mongodb:27017/supertokens?authSource=admin
-  #     POSTGRESQL_USER: ${POSTGRESQL_USER}
-  #     POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
-  #     POSTGRESQL_HOST: ${POSTGRESQL_HOST}
-  #     POSTGRESQL_PORT: ${POSTGRESQL_PORT}
-  #     POSTGRESQL_DATABASE_NAME: ${POSTGRESQL_DATABASE_NAME}
-  #     API_KEYS: ${SUPERTOKEN_API_KEYS}
-  #   networks:
-  #     - app_network
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: >
-  #       bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   ports:
-  #     - "3567:3567"
-  #   # depends_on:
-  #   #   - mongodb
-  #   depends_on:
-  #     postgre:
-  #       condition: service_healthy
+  arangodb_db:
+    image: arangodb:latest
+    container_name: arango
+    environment:
+      ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
+    ports:
+      - 8529:8529
+    networks:
+      - mangachan_net
+    volumes:
+      - arangodb_data_container:/var/lib/arangodb3
+      - arangodb_apps_data_container:/var/lib/arangodb3-apps
+
 
 networks:
-  app_network:
+  mangachan_net:
     driver: bridge  
 
 volumes:
-  mongo-data:
+  arangodb_data_container:
+  arangodb_apps_data_container:
   keydb-data:
-  # postgres_data:

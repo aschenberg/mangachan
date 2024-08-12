@@ -2,45 +2,100 @@ package usecase
 
 import (
 	"context"
+	"manga/config"
 	"manga/internal/domain"
+	"manga/internal/domain/dtos"
 	"manga/internal/domain/models"
-	"manga/pkg/tokenutil"
 	"time"
 )
 
-type loginUsecase struct {
-	userRepository domain.UserRepository
-	contextTimeout time.Duration
+type ILoginUsecase interface {
+	Login(c context.Context, claims models.GoogleClaims) (dtos.LoginResponse, string, error)
 }
 
-func NewLoginUsecase(userRepository domain.UserRepository, timeout time.Duration) domain.LoginUsecase {
+type loginUsecase struct {
+	UR             domain.UserRepository
+	contextTimeout time.Duration
+	Cfg            *config.Config
+}
+
+func NewLoginUsecase(UR domain.UserRepository, timeout time.Duration) ILoginUsecase {
 	return &loginUsecase{
-		userRepository: userRepository,
+		UR:             UR,
 		contextTimeout: timeout,
 	}
 }
 
-func (lu *loginUsecase) GetUserBySub(c context.Context, sub string) (models.User, error) {
+func (lu *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dtos.LoginResponse, string, error) {
 	ctx, cancel := context.WithTimeout(c, lu.contextTimeout)
 	defer cancel()
-	return lu.userRepository.GetByAppId(ctx, sub)
-}
+	// isUserExist, err := lu.UR.IsExistBySubID(ctx, claims.Sub)
+	// if err != nil {
+	// 	print(err.Error())
+	// 	return dtos.LoginResponse{}, "", fmt.Errorf("failed check user exist: %w", err)
+	// }
+	// print(isUserExist)
+	// // if !isUserExist {
+	usr := models.User{AppID: claims.Sub, Email: claims.Email, Picture: claims.Picture, GivenName: claims.GivenName, FamilyName: claims.FamilyName, Name: claims.Name}
+	_, err := lu.UR.Create(ctx, usr)
+	if err != nil {
+		return dtos.LoginResponse{}, "", err
+	}
+	// refreshToken, err := tokenutil.CreateRefreshToken(
+	// 	usr, lu.Cfg.JWT.RefreshTokenSecret,
+	// 	lu.Cfg.JWT.RefreshTokenExpireHour)
+	// if err != nil {
+	// 	return dtos.LoginResponse{}, "", err
+	// }
+	// err = lu.UR.UpdateRefreshToken(ctx, claims.Sub, refreshToken)
+	// if err != nil {
+	// 	return dtos.LoginResponse{}, "", err
+	// }
+	// accessToken, err := tokenutil.CreateAccessToken(
+	// 	usr, lu.Cfg.JWT.RefreshTokenSecret,
+	// 	lu.Cfg.JWT.RefreshTokenExpireHour)
+	// if err != nil {
+	// 	return dtos.LoginResponse{}, "", err
+	// }
 
-func (lu *loginUsecase) CreateUser(c context.Context, user models.User) (models.User, error) {
-	ctx, cancel := context.WithTimeout(c, lu.contextTimeout)
-	defer cancel()
-	return lu.userRepository.Create(ctx, user)
-}
-
-func (lu *loginUsecase) CreateAccessToken(user models.User, secret string, expiry int) (accessToken string, err error) {
-	return tokenutil.CreateAccessToken(user, secret, expiry)
-}
-
-func (lu *loginUsecase) CreateRefreshToken(user models.User, secret string, expiry int) (refreshToken string, err error) {
-	return tokenutil.CreateRefreshToken(user, secret, expiry)
-}
-func (lu *loginUsecase) UpdateRefresh(c context.Context, id string, token string) error {
-	ctx, cancel := context.WithTimeout(c, lu.contextTimeout)
-	defer cancel()
-	return lu.userRepository.UpdateRefreshToken(ctx, id, token)
+	response := dtos.LoginResponse{
+		AccessToken:  "",
+		RefreshToken: "",
+		ID:           "created.ID",
+		Name:         "created.Name",
+		Email:        "created.Email",
+		Picture:      "created.Picture",
+	}
+	return response, "created", nil
+	// } else {
+	// 	usr, err := lu.UR.UpdateBySubID(ctx, claims)
+	// 	if err != nil {
+	// 		return dtos.LoginResponse{}, "", err
+	// 	}
+	// 	refreshToken, err := tokenutil.CreateRefreshToken(
+	// 		usr, lu.Cfg.JWT.RefreshTokenSecret,
+	// 		lu.Cfg.JWT.RefreshTokenExpireHour)
+	// 	if err != nil {
+	// 		return dtos.LoginResponse{}, "", err
+	// 	}
+	// 	err = lu.UR.UpdateRefreshToken(ctx, claims.Sub, refreshToken)
+	// 	if err != nil {
+	// 		return dtos.LoginResponse{}, "", err
+	// 	}
+	// 	accessToken, err := tokenutil.CreateAccessToken(
+	// 		usr, lu.Cfg.JWT.RefreshTokenSecret,
+	// 		lu.Cfg.JWT.RefreshTokenExpireHour)
+	// 	if err != nil {
+	// 		return dtos.LoginResponse{}, "", err
+	// 	}
+	// 	response := dtos.LoginResponse{
+	// 		AccessToken:  accessToken,
+	// 		RefreshToken: refreshToken,
+	// 		ID:           usr.ID,
+	// 		Name:         usr.Name,
+	// 		Email:        usr.Email,
+	// 		Picture:      usr.Picture,
+	// 	}
+	// 	return response, "exist", nil
+	// }
 }
