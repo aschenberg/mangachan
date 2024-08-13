@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"manga/internal/domain"
+	"manga/internal/domain/dtos"
 	"manga/internal/domain/models"
 
 	"github.com/arangodb/go-driver/v2/arangodb"
@@ -104,6 +105,58 @@ func (ur *userRepository) IsExistBySubID(c context.Context, subId string) (bool,
 		return false, fmt.Errorf("failed to read document: %w", err)
 	}
 	return true, nil
+}
+
+func (ur *userRepository) CreateOrUpdate(c context.Context, claim models.GoogleClaims) (models.User, string, error) {
+
+	query := `
+	UPSERT { app_id: @app_id }
+	INSERT {
+		app_id: @app_id,
+		email: @Email,
+		picture: @Picture,
+		role: @Role,
+		given_name: @GivenName,
+		family_name: @FamilyName,
+		name: @Name
+	}
+	UPDATE {
+		given_name: @GivenName,
+		family_name: @FamilyName,
+		name: @Name,
+		picture: @Picture
+
+	}
+	IN @@collection
+	RETURN { doc: NEW, type: OLD ? 'update' : 'insert' }`
+
+	bindVars := map[string]interface{}{
+		"@collection": ur.col,
+		"app_id":      claim.Sub,
+		"Email":       claim.Email,
+		"Picture":     claim.Picture,
+		"Role":        []string{"user"},
+		"GivenName":   claim.GivenName,
+		"FamilyName":  claim.FamilyName,
+		"Name":        claim.Name,
+	}
+	opts := &arangodb.QueryOptions{BindVars: bindVars}
+	cursor, err := ur.db.Query(c, query, opts)
+	if err != nil {
+		return models.User{}, "", fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer cursor.Close()
+
+	var result dtos.AuthResult
+
+	_, err = cursor.ReadDocument(c, &result)
+	if shared.IsNoMoreDocuments(err) {
+		return models.User{}, "", nil
+	} else if err != nil {
+		return models.User{}, "", fmt.Errorf("failed to read document: %w", err)
+	}
+	return result.Doc, result.Type, nil
+
 }
 
 //	func (ur *userRepository) FindByRefreshToken(c context.Context, token string) (models.User, error) {

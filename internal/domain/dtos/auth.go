@@ -1,5 +1,7 @@
 package dtos
 
+import "manga/internal/domain/models"
+
 type AuthRequest struct {
 	IDToken     string `json:"idToken"`
 	AccessToken string `json:"accessToken"`
@@ -13,4 +15,9 @@ type LoginResponse struct {
 	Email        string   `json:"email"`
 	Role         []string `json:"role"`
 	Picture      string   `json:"picture"`
+}
+
+type AuthResult struct {
+	Doc  models.User `json:"doc"`
+	Type string      `json:"type"`
 }
