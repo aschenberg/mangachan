@@ -1,44 +1,44 @@
 package ard
 
-import (
-	"context"
-	"fmt"
+// import (
+// 	"context"
+// 	"fmt"
 
-	"manga/internal/domain"
-	"manga/internal/domain/dtos"
-	"manga/internal/domain/models"
+// 	"manga/internal/domain"
+// 	"manga/internal/domain/dtos"
+// 	"manga/internal/domain/models"
 
-	"github.com/arangodb/go-driver/v2/arangodb"
-	"github.com/arangodb/go-driver/v2/arangodb/shared"
-)
+// 	"github.com/arangodb/go-driver/v2/arangodb"
+// 	"github.com/arangodb/go-driver/v2/arangodb/shared"
+// )
 
-type userRepository struct {
-	db  arangodb.Database
-	col string
-}
+// type userRepository struct {
+// 	db  arangodb.Database
+// 	col string
+// }
 
-func NewUserRepository(db arangodb.Database, col string) domain.UserRepository {
-	return &userRepository{
-		db:  db,
-		col: col,
-	}
-}
+// func NewUserRepository(db arangodb.Database, col string) domain.UserRepository {
+// 	return &userRepository{
+// 		db:  db,
+// 		col: col,
+// 	}
+// }
 
-func (ur *userRepository) Create(c context.Context, user models.User) (models.User, error) {
-	col, err := ur.db.GetCollection(c, ur.col, nil)
-	if err != nil {
-		return models.User{}, err
-	}
+// func (ur *userRepository) Create(c context.Context, user models.User) (models.User, error) {
+// 	col, err := ur.db.GetCollection(c, ur.col, nil)
+// 	if err != nil {
+// 		return models.User{}, err
+// 	}
 
-	_, err = col.CreateDocument(c, user)
-	if err != nil {
-		return models.User{}, err
-	}
-	// user.ID = string(result.ID)
-	// user.Key = result.Key
+// 	_, err = col.CreateDocument(c, user)
+// 	if err != nil {
+// 		return models.User{}, err
+// 	}
+// 	// user.ID = string(result.ID)
+// 	// user.Key = result.Key
 
-	return models.User{}, nil
-}
+// 	return models.User{}, nil
+// }
 
 // func (ur *userRepository) Fetch(c context.Context) ([]models.User, error) {
 // 	collection := ur.database.Collection(ur.collection)
@@ -60,104 +60,104 @@ func (ur *userRepository) Create(c context.Context, user models.User) (models.Us
 // 	return users, err
 // }
 
-func (ur *userRepository) UpdateBySubID(c context.Context, claim models.GoogleClaims) (models.User, error) {
-	query := `FOR user IN @collection 
-			  FILTER user.app_id == @app_id 
-			  UPDATE user WITH { picture: @picture, given_name: @given_name, family_name: @family_name, name: @name } IN @collection`
-	bindVars := map[string]interface{}{
-		"collection":  ur.col,
-		"app_id":      claim.Sub,
-		"picture":     claim.Picture,
-		"given_name":  claim.GivenName,
-		"family_name": claim.FamilyName,
-		"name":        claim.Name,
-	}
-	cursor, err := ur.db.Query(c, query, &arangodb.QueryOptions{BindVars: bindVars})
-	defer cursor.Close()
+// func (ur *userRepository) UpdateBySubID(c context.Context, claim models.GoogleClaims) (models.User, error) {
+// 	query := `FOR user IN @collection
+// 			  FILTER user.app_id == @app_id
+// 			  UPDATE user WITH { picture: @picture, given_name: @given_name, family_name: @family_name, name: @name } IN @collection`
+// 	bindVars := map[string]interface{}{
+// 		"collection":  ur.col,
+// 		"app_id":      claim.Sub,
+// 		"picture":     claim.Picture,
+// 		"given_name":  claim.GivenName,
+// 		"family_name": claim.FamilyName,
+// 		"name":        claim.Name,
+// 	}
+// 	cursor, err := ur.db.Query(c, query, &arangodb.QueryOptions{BindVars: bindVars})
+// 	defer cursor.Close()
 
-	var updatedUser models.User
+// 	var updatedUser models.User
 
-	_, err = cursor.ReadDocument(context.Background(), &updatedUser)
-	if err != nil {
-		return models.User{}, fmt.Errorf("failed to read updated document: %w", err)
-	}
-	return updatedUser, nil
-}
+// 	_, err = cursor.ReadDocument(context.Background(), &updatedUser)
+// 	if err != nil {
+// 		return models.User{}, fmt.Errorf("failed to read updated document: %w", err)
+// 	}
+// 	return updatedUser, nil
+// }
 
-func (ur *userRepository) IsExistBySubID(c context.Context, subId string) (bool, error) {
-	query := `FOR user IN @@collection FILTER user.app_id == @subId LIMIT 1 RETURN user`
-	cursor, err := ur.db.Query(c, query,
-		&arangodb.QueryOptions{
-			BindVars: map[string]interface{}{"@collection": ur.col, "subId": subId}})
-	if err != nil {
+// func (ur *userRepository) IsExistBySubID(c context.Context, subId string) (bool, error) {
+// 	query := `FOR user IN @@collection FILTER user.app_id == @subId LIMIT 1 RETURN user`
+// 	cursor, err := ur.db.Query(c, query,
+// 		&arangodb.QueryOptions{
+// 			BindVars: map[string]interface{}{"@collection": ur.col, "subId": subId}})
+// 	if err != nil {
 
-		return false, fmt.Errorf("failed to execute query: %w", err)
-	}
-	defer cursor.Close()
+// 		return false, fmt.Errorf("failed to execute query: %w", err)
+// 	}
+// 	defer cursor.Close()
 
-	// Read the first document
-	var res models.User
-	_, err = cursor.ReadDocument(c, &res)
-	if shared.IsNoMoreDocuments(err) {
-		// No document found
-		return false, nil
-	} else if err != nil {
-		return false, fmt.Errorf("failed to read document: %w", err)
-	}
-	return true, nil
-}
+// 	// Read the first document
+// 	var res models.User
+// 	_, err = cursor.ReadDocument(c, &res)
+// 	if shared.IsNoMoreDocuments(err) {
+// 		// No document found
+// 		return false, nil
+// 	} else if err != nil {
+// 		return false, fmt.Errorf("failed to read document: %w", err)
+// 	}
+// 	return true, nil
+// }
 
-func (ur *userRepository) CreateOrUpdate(c context.Context, claim models.GoogleClaims) (models.User, string, error) {
+// func (ur *userRepository) CreateOrUpdate(c context.Context, claim models.GoogleClaims) (models.User, string, error) {
 
-	query := `
-	UPSERT { app_id: @app_id }
-	INSERT {
-		app_id: @app_id,
-		email: @Email,
-		picture: @Picture,
-		role: @Role,
-		given_name: @GivenName,
-		family_name: @FamilyName,
-		name: @Name
-	}
-	UPDATE {
-		given_name: @GivenName,
-		family_name: @FamilyName,
-		name: @Name,
-		picture: @Picture
+// 	query := `
+// 	UPSERT { app_id: @app_id }
+// 	INSERT {
+// 		app_id: @app_id,
+// 		email: @Email,
+// 		picture: @Picture,
+// 		role: @Role,
+// 		given_name: @GivenName,
+// 		family_name: @FamilyName,
+// 		name: @Name
+// 	}
+// 	UPDATE {
+// 		given_name: @GivenName,
+// 		family_name: @FamilyName,
+// 		name: @Name,
+// 		picture: @Picture
 
-	}
-	IN @@collection
-	RETURN { doc: NEW, type: OLD ? 'update' : 'insert' }`
+// 	}
+// 	IN @@collection
+// 	RETURN { doc: NEW, type: OLD ? 'update' : 'insert' }`
 
-	bindVars := map[string]interface{}{
-		"@collection": ur.col,
-		"app_id":      claim.Sub,
-		"Email":       claim.Email,
-		"Picture":     claim.Picture,
-		"Role":        []string{"user"},
-		"GivenName":   claim.GivenName,
-		"FamilyName":  claim.FamilyName,
-		"Name":        claim.Name,
-	}
-	opts := &arangodb.QueryOptions{BindVars: bindVars}
-	cursor, err := ur.db.Query(c, query, opts)
-	if err != nil {
-		return models.User{}, "", fmt.Errorf("failed to execute query: %w", err)
-	}
-	defer cursor.Close()
+// 	bindVars := map[string]interface{}{
+// 		"@collection": ur.col,
+// 		"app_id":      claim.Sub,
+// 		"Email":       claim.Email,
+// 		"Picture":     claim.Picture,
+// 		"Role":        []string{"user"},
+// 		"GivenName":   claim.GivenName,
+// 		"FamilyName":  claim.FamilyName,
+// 		"Name":        claim.Name,
+// 	}
+// 	opts := &arangodb.QueryOptions{BindVars: bindVars}
+// 	cursor, err := ur.db.Query(c, query, opts)
+// 	if err != nil {
+// 		return models.User{}, "", fmt.Errorf("failed to execute query: %w", err)
+// 	}
+// 	defer cursor.Close()
 
-	var result dtos.AuthResult
+// 	var result dtos.AuthResult
 
-	_, err = cursor.ReadDocument(c, &result)
-	if shared.IsNoMoreDocuments(err) {
-		return models.User{}, "", nil
-	} else if err != nil {
-		return models.User{}, "", fmt.Errorf("failed to read document: %w", err)
-	}
-	return result.Doc, result.Type, nil
+// 	_, err = cursor.ReadDocument(c, &result)
+// 	if shared.IsNoMoreDocuments(err) {
+// 		return models.User{}, "", nil
+// 	} else if err != nil {
+// 		return models.User{}, "", fmt.Errorf("failed to read document: %w", err)
+// 	}
+// 	return result.Doc, result.Type, nil
 
-}
+// }
 
 //	func (ur *userRepository) FindByRefreshToken(c context.Context, token string) (models.User, error) {
 //		collection := ur.database.Collection(ur.collection)
@@ -169,19 +169,19 @@ func (ur *userRepository) CreateOrUpdate(c context.Context, claim models.GoogleC
 //		}
 //		return result, nil
 //	}
-func (ur *userRepository) UpdateRefreshToken(c context.Context, subId string, token string) error {
-	query := `FOR user IN @collection 
-			  FILTER user.app_id == @app_id
-			  UPDATE user WITH { refresh_token: @token } IN @collection`
-	_, err := ur.db.Query(c, query,
-		&arangodb.QueryOptions{
-			BindVars: map[string]interface{}{"app_id": subId, "token": token}})
-	if err != nil {
-		return fmt.Errorf("failed to execute query: %w", err)
-	}
+// func (ur *userRepository) UpdateRefreshToken(c context.Context, subId string, token string) error {
+// 	query := `FOR user IN @collection
+// 			  FILTER user.app_id == @app_id
+// 			  UPDATE user WITH { refresh_token: @token } IN @collection`
+// 	_, err := ur.db.Query(c, query,
+// 		&arangodb.QueryOptions{
+// 			BindVars: map[string]interface{}{"app_id": subId, "token": token}})
+// 	if err != nil {
+// 		return fmt.Errorf("failed to execute query: %w", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // func (ur *userRepository) FetchByName(c context.Context, name string, sortField string, sortOrder int, page int64, pageSize int64, rsid string) ([]models.User, int64, error) {
 // 	collection := ur.database.Collection(ur.collection)

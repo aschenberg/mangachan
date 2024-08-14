@@ -1,0 +1,22 @@
+[
+    {
+    
+    "name": "Telkomsel 5000",
+    "description": "pulsa telkomsel 5000",
+    "price": 5000,
+    "stock": 20,
+    "category": {
+      "$numberLong": "237865963192721409"
+    },
+    "sub_category": {
+      "$numberLong": "237866064376115201"
+    },
+    "image_url": "237865689879285761-237866413874913281.jpg",
+    "is_deleted": false,
+    "created_at": {
+      "$numberLong": "1697706972952"
+    },
+    "updated_at": {
+      "$numberLong": "1697706972952"
+    }
+  }]

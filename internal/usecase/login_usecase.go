@@ -6,6 +6,7 @@ import (
 	"manga/internal/domain"
 	"manga/internal/domain/dtos"
 	"manga/internal/domain/models"
+	"manga/internal/infra/pgsql/pgdb"
 	"manga/pkg/tokenutil"
 	"time"
 )
@@ -31,7 +32,8 @@ func (lu *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 	ctx, cancel := context.WithTimeout(c, lu.contextTimeout)
 	defer cancel()
 
-	usr, status, err := lu.UR.CreateOrUpdate(ctx, claims)
+	user := pgdb.CreateUserParams{}
+	usr, err := lu.UR.CreateOrUpdate(ctx, user)
 	if err != nil {
 		return dtos.LoginResponse{}, "", err
 	}

@@ -15,6 +15,7 @@ type Config struct {
 	Server   ServerConfig
 	JWT      JWTConfig
 	Arango   ArangoConfig
+	Postgre  PostgreConfig
 	Redis    RedisConfig
 	Password PasswordConfig
 	Cors     CorsConfig
@@ -43,17 +44,6 @@ type LoggerConfig struct {
 	Logger   string `env:"LOGGER"`
 }
 
-//	type PostgresConfig struct {
-//		Host            string
-//		Port            string
-//		User            string
-//		Password        string
-//		DbName          string
-//		SSLMode         string
-//		MaxIdleConns    int
-//		MaxOpenConns    int
-//		ConnMaxLifetime time.Duration
-//	}
 type ArangoConfig struct {
 	Host     string        `env:"ARANGO_HOST"`
 	Port     string        `env:"ARANGO_PORT"`
@@ -83,6 +73,16 @@ type PasswordConfig struct {
 	MaxLength        int
 	IncludeUppercase bool
 	IncludeLowercase bool
+}
+
+type PostgreConfig struct {
+	PG_Username      string `env:"PG_USERNAME"`
+	PG_Password      string `env:"PG_PASSWORD"`
+	PG_PoolMax       int    `env:"PG_POOLMAX"`
+	PG_Port          string `env:"PG_PORT"`
+	PG_Host          string `env:"PG_HOST"`
+	PG_Name          string `env:"PG_NAME"`
+	PG_MIGRATION_URL string `env:"PG_MIGRATION_URL"`
 }
 
 type CorsConfig struct {

@@ -1,0 +1,43 @@
+version: "2"
+
+overrides:
+  go:
+    overrides: [
+      { "column": "dorder.desc",
+        "go_type": {
+          "import" : "englishguru/internal/postgresql/db",
+          "package": "dto",
+          "type": "BookData"
+        }
+          
+      },
+    ]
+      
+sql:
+  - engine: "postgresql"
+    # queries refers to where our manually created queries located
+    # queries: "query.sql" # will refer a file
+    # or
+    queries: "/internal/infra/postgresql/queries" # will refer a directory
+    # schema refers to where our schema definitions located
+    # schema: "schema.sql" # will refer a file
+    # or
+    schema: "migrations/sql" # will refer a directory
+    gen:
+      go:
+        package: "pgdb"
+        output_models_file_name: entities.go
+        
+        sql_package: "pgx/v5"
+        out: "/internal/infra/postgresql/pgdb"
+        emit_empty_slices: true
+        emit_pointers_for_null_types: false
+  
+
+    # docker run --rm -v "${PWD}:/src" -w /src sqlc/sqlc generate
+  
+    # migrate -path migrations/sql -database "postgresql://destiny:12345678@localhost:3333/guru_db?sslmode=disable" -verbose up
+    # migrate -path migrations/sql -database "postgresql://linpostgres:Iu8q@GktqHUqC184@lin-26815-10323-pgsql-primary.servers.linodedb.net:5432/postgres?sslmode=require" -verbose up
+
+    # migrate create -ext sql -dir migrations/sql -seq schema
+    # migrate create -ext json -dir migrations/json -seq schema
