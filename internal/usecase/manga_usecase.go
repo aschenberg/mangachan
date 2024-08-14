@@ -41,12 +41,12 @@ func (mu *mangaUsecase) Create(c context.Context, manga dtos.CreateManga) error 
 		return pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "error generate spaceflake")
 	}
 
-	result, err := imagekio.UploadSingle(ctx, manga.Cover, newId.Hex(), utils.Int64ToStr(imgID), "jpg")
+	result, err := imagekio.UploadSingle(ctx, manga.Cover, newId, utils.Int64ToStr(imgID), "jpg")
 	if err != nil {
 		return pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "error send image")
 	}
 
-	err = fileutils.SaveFileFromURL(result.Data.Url, newId.Hex())
+	err = fileutils.SaveFileFromURL(result.Data.Url, newId)
 	if err != nil {
 		return err
 	}
