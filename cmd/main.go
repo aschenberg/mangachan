@@ -15,7 +15,7 @@ import (
 func main() {
 	cfg := config.NewConfig()
 	log := logging.NewLogger(cfg)
-	httpServer := api.InitServer(cfg)
+	httpServer := api.InitServer(cfg, log)
 	err := waitForSignals(log, httpServer)
 	shutdown(err, httpServer, log)
 

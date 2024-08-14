@@ -8,7 +8,9 @@ const (
 	General         Category = "General"
 	IO              Category = "IO"
 	Internal        Category = "Internal"
+	JWT             Category = "JWT"
 	Postgres        Category = "Postgres"
+	Snowflake       Category = "SnowFlake"
 	Redis           Category = "Redis"
 	Validation      Category = "Validation"
 	RequestResponse Category = "RequestResponse"
@@ -27,7 +29,10 @@ const (
 	Update    SubCategory = "Update"
 	Delete    SubCategory = "Delete"
 	Insert    SubCategory = "Insert"
+	Upsert    SubCategory = "Upsert"
 
+	CreatedID     SubCategory = "CreateID"
+	GenerateToken SubCategory = "GenerateToken"
 	// Internal
 	Api                 SubCategory = "Api"
 	HashPassword        SubCategory = "HashPassword"

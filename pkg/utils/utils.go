@@ -1,4 +1,4 @@
-package pkg
+package utils
 
 import (
 	"fmt"
@@ -63,4 +63,12 @@ func CreateBoolList(size int, sublistSize int) [][]bool {
 		list[i] = make([]bool, sublistSize)
 	}
 	return list
+}
+
+func StrIsEmpty(value string) bool {
+	if value == "" {
+		return false
+	} else {
+		return true
+	}
 }

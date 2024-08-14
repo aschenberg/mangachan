@@ -5,8 +5,7 @@ import (
 	"manga/db"
 	"manga/internal/domain"
 	"manga/internal/domain/models"
-
-	"manga/pkg"
+	"manga/pkg/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -38,7 +37,7 @@ func (cr *mangaRepository) FindById(c context.Context, id string) (models.Manga,
 	collection := cr.database.Collection(models.CollectionManga)
 	var result models.Manga
 
-	err := collection.FindOne(c, bson.M{"_id": pkg.StrToObjectID(id)}).Decode(&result)
+	err := collection.FindOne(c, bson.M{"_id": utils.StrToObjectID(id)}).Decode(&result)
 	if err != nil {
 		return models.Manga{}, err
 	}

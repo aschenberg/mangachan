@@ -10,5 +10,6 @@ const (
 )
 
 type UserRepository interface {
-	CreateOrUpdate(c context.Context, user pgdb.CreateUserParams) (pgdb.CreateUserRow, error)
+	CreateOrUpdate(c context.Context, user pgdb.CreateOrUpdateUserParams) (pgdb.CreateOrUpdateUserRow, error)
+	UpdateRefreshToken(c context.Context, token pgdb.UpdateRefreshTokenParams) error
 }
