@@ -22,10 +22,7 @@ type Manga struct {
 	Status       string    `json:"status"`
 	Authors      []string  `json:"authors"`
 	Artists      []string  `json:"artists"`
-	Genres       []string  `json:"genres"`
 	Score        float64   `json:"score"`
-	Themes       []string  `json:"themes"`
-	Demographic  []string  `json:"demographic"`
 	Summary      string    `json:"summary"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	CreatedAt    time.Time `json:"created_at"`
