@@ -5,8 +5,7 @@ const (
 )
 
 type User struct {
-	ID           string   `json:"_id,omitempty"`
-	Key          string   `json:"_key,omitempty"`
+	UserID       string   `json:"user_id,omitempty"`
 	AppID        string   `json:"app_id"`
 	Email        string   `json:"email"`
 	Picture      string   `json:"picture"`

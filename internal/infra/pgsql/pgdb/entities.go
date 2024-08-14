@@ -8,45 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Char struct {
-	CharID    int32
-	Step      int32
-	Image     pgtype.Text
-	Voice     pgtype.Text
-	En        pgtype.Text
-	ID        pgtype.Text
-	IsDeleted bool
-	CreatedAt int64
-	UpdatedAt int64
-}
-
-type Lesson struct {
-	LessonID  int32
-	Title     string
-	VideoUrl  pgtype.Text
-	Number    int32
-	IsFree    bool
-	IsDeleted bool
-	CreatedAt int64
-	UpdatedAt int64
-}
-
-type Page struct {
-	PageID     int32
-	LessonID   int32
-	PageNumber int32
-	CreatedAt  int64
-	UpdatedAt  int64
-}
-
-type PageChar struct {
-	PageCharID int32
-	PageID     int32
-	CharID     int32
-	CreatedAt  int64
-	UpdatedAt  int64
-}
-
 type Setting struct {
 	SettingID    int32
 	FirstVoucher bool
@@ -55,13 +16,13 @@ type Setting struct {
 type User struct {
 	UserID       int64
 	AppID        string
-	SubID        string
 	Email        string
 	Picture      pgtype.Text
 	Role         int16
 	IsActive     bool
 	GivenName    pgtype.Text
 	FamilyName   pgtype.Text
+	Name         pgtype.Text
 	RefreshToken string
 	IsDeleted    bool
 	CreatedAt    int64

@@ -4,6 +4,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"manga/config"
 
 	"log"
 	"time"

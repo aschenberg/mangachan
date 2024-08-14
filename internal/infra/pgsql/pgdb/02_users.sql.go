@@ -22,67 +22,85 @@ func (q *Queries) CheckUserEmailExist(ctx context.Context, email string) (string
 	return email, err
 }
 
-const createUser = `-- name: CreateUser :one
+const createOrUpdateUser = `-- name: CreateOrUpdateUser :one
 INSERT INTO users (
   user_id,
 	app_id,
-	sub_id,
 	email,
   picture,
 	role,
 	is_active,
 	given_name,
 	family_name,
+	name,
 	refresh_token,
 	created_at,
 	is_deleted,
 	updated_at
 ) VALUES (
   $1,$2,$3,$4,$5, $6,$7,$8,$9,$10,$11,$12,$13
-)
-RETURNING user_id,created_at,updated_at
+) ON CONFLICT (app_id) DO UPDATE SET 
+picture = COALESCE($14,picture),
+given_name = COALESCE($15,given_name),
+family_name = COALESCE($16,family_name),
+name = COALESCE($17,name)
+RETURNING user_id,created_at,updated_at, CASE WHEN xmax = 0 THEN 'inserted' ELSE 'updated' END as operation
 `
 
-type CreateUserParams struct {
+type CreateOrUpdateUserParams struct {
 	UserID       int64
 	AppID        string
-	SubID        string
 	Email        string
 	Picture      pgtype.Text
 	Role         int16
 	IsActive     bool
 	GivenName    pgtype.Text
 	FamilyName   pgtype.Text
+	Name         pgtype.Text
 	RefreshToken string
 	CreatedAt    int64
 	IsDeleted    bool
 	UpdatedAt    int64
+	Picture      pgtype.Text
+	GivenName    pgtype.Text
+	FamilyName   pgtype.Text
+	Name         pgtype.Text
 }
 
-type CreateUserRow struct {
+type CreateOrUpdateUserRow struct {
 	UserID    int64
 	CreatedAt int64
 	UpdatedAt int64
+	Operation string
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRow(ctx, createUser,
+func (q *Queries) CreateOrUpdateUser(ctx context.Context, arg CreateOrUpdateUserParams) (CreateOrUpdateUserRow, error) {
+	row := q.db.QueryRow(ctx, createOrUpdateUser,
 		arg.UserID,
 		arg.AppID,
-		arg.SubID,
 		arg.Email,
 		arg.Picture,
 		arg.Role,
 		arg.IsActive,
 		arg.GivenName,
 		arg.FamilyName,
+		arg.Name,
 		arg.RefreshToken,
 		arg.CreatedAt,
 		arg.IsDeleted,
 		arg.UpdatedAt,
+		arg.Picture,
+		arg.GivenName,
+		arg.FamilyName,
+		arg.Name,
 	)
-	var i CreateUserRow
-	err := row.Scan(&i.UserID, &i.CreatedAt, &i.UpdatedAt)
+	var i CreateOrUpdateUserRow
+	err := row.Scan(
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Operation,
+	)
 	return i, err
 }
 
@@ -97,23 +115,23 @@ func (q *Queries) DeleteUser(ctx context.Context, userID int64) error {
 }
 
 const findBySubID = `-- name: FindBySubID :one
-SELECT user_id, app_id, sub_id, email, picture, role, is_active, given_name, family_name, refresh_token, is_deleted, created_at, updated_at FROM users
-WHERE sub_id = $1 LIMIT 1
+SELECT user_id, app_id, email, picture, role, is_active, given_name, family_name, name, refresh_token, is_deleted, created_at, updated_at FROM users
+WHERE app_id = $1 LIMIT 1
 `
 
-func (q *Queries) FindBySubID(ctx context.Context, subID string) (User, error) {
-	row := q.db.QueryRow(ctx, findBySubID, subID)
+func (q *Queries) FindBySubID(ctx context.Context, appID string) (User, error) {
+	row := q.db.QueryRow(ctx, findBySubID, appID)
 	var i User
 	err := row.Scan(
 		&i.UserID,
 		&i.AppID,
-		&i.SubID,
 		&i.Email,
 		&i.Picture,
 		&i.Role,
 		&i.IsActive,
 		&i.GivenName,
 		&i.FamilyName,
+		&i.Name,
 		&i.RefreshToken,
 		&i.IsDeleted,
 		&i.CreatedAt,
@@ -147,7 +165,7 @@ func (q *Queries) GetUserActiveStatus(ctx context.Context, email string) (bool, 
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT user_id, app_id, sub_id, email, picture, role, is_active, given_name, family_name, refresh_token, is_deleted, created_at, updated_at FROM users
+SELECT user_id, app_id, email, picture, role, is_active, given_name, family_name, name, refresh_token, is_deleted, created_at, updated_at FROM users
 WHERE user_id = $1 LIMIT 1
 `
 
@@ -157,13 +175,13 @@ func (q *Queries) GetUserByID(ctx context.Context, userID int64) (User, error) {
 	err := row.Scan(
 		&i.UserID,
 		&i.AppID,
-		&i.SubID,
 		&i.Email,
 		&i.Picture,
 		&i.Role,
 		&i.IsActive,
 		&i.GivenName,
 		&i.FamilyName,
+		&i.Name,
 		&i.RefreshToken,
 		&i.IsDeleted,
 		&i.CreatedAt,

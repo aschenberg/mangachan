@@ -1,28 +1,32 @@
 -- name: FindBySubID :one
 SELECT * FROM users
-WHERE sub_id = $1 LIMIT 1;
+WHERE app_id = $1 LIMIT 1;
 
 
 
--- name: CreateUser :one
+-- name: CreateOrUpdateUser :one
 INSERT INTO users (
   user_id,
 	app_id,
-	sub_id,
 	email,
   picture,
 	role,
 	is_active,
 	given_name,
 	family_name,
+	name,
 	refresh_token,
 	created_at,
 	is_deleted,
 	updated_at
 ) VALUES (
   $1,$2,$3,$4,$5, $6,$7,$8,$9,$10,$11,$12,$13
-)
-RETURNING user_id,created_at,updated_at;
+) ON CONFLICT (app_id) DO UPDATE SET 
+picture = COALESCE(sqlc.narg('picture'),picture),
+given_name = COALESCE(sqlc.narg('given_name'),given_name),
+family_name = COALESCE(sqlc.narg('family_name'),family_name),
+name = COALESCE(sqlc.narg('name'),name)
+RETURNING user_id,created_at,updated_at, CASE WHEN xmax = 0 THEN 'inserted' ELSE 'updated' END as operation;
 
 -- name: GetRefreshToken :one
 SELECT refresh_token FROM users

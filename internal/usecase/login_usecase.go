@@ -59,7 +59,7 @@ func (lu *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 		Picture:      usr.Picture,
 	}
 
-	return response, status, nil
+	return response, "", nil
 	// } else {
 	// 	usr, err := lu.UR.UpdateBySubID(ctx, claims)
 	// 	if err != nil {
