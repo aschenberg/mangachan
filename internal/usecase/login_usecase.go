@@ -27,11 +27,12 @@ type loginUsecase struct {
 	Log            logging.Logger
 }
 
-func NewLoginUsecase(UR domain.UserRepository, timeout time.Duration, log logging.Logger) ILoginUsecase {
+func NewLoginUsecase(UR domain.UserRepository, cfg *config.Config, timeout time.Duration, log logging.Logger) ILoginUsecase {
 	return &loginUsecase{
 		UR:             UR,
 		contextTimeout: timeout,
 		Log:            log,
+		Cfg:            cfg,
 	}
 }
 
@@ -40,6 +41,7 @@ func (uc *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 	defer cancel()
 
 	createTime := time.Now().UTC().UnixMilli()
+	//TODO - Generated Snow Flake ID
 	key, err := flake.GenerateID(1, 1, 1)
 	if err != nil {
 		uc.Log.Error(logging.Snowflake, logging.CreatedID, err.Error(), nil)
@@ -48,12 +50,15 @@ func (uc *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 
 	//TODO - Create Or Update User
 	created := pgdb.CreateOrUpdateUserParams{
-		ID: key, Appid: claims.Sub, Email: claims.Email,
+		Userid: key, Appid: claims.Sub, Mail: claims.Email,
 		Picture: pgtype.Text{
 			String: claims.Picture,
 			Valid:  utils.StrIsEmpty(claims.Picture)},
-		Role:     0,
+		Roles:    0,
 		Isactive: true,
+		Pic: pgtype.Text{
+			String: claims.Picture,
+			Valid:  utils.StrIsEmpty(claims.Picture)},
 		GivenName: pgtype.Text{
 			String: claims.GivenName,
 			Valid:  utils.StrIsEmpty(claims.GivenName)},
@@ -72,15 +77,13 @@ func (uc *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 
 	usr, err := uc.UR.CreateOrUpdate(ctx, created)
 	if err != nil {
-
 		return dtos.LoginResponse{}, "", err
 	}
 
-	//TODO - Generated Refresh Token
+	// TODO - Generated Refresh Token
 	user := models.User{
-		UserID:     utils.Int64ToStr(usr.UserID),
-		GivenName:  usr.GivenName.String,
-		FamilyName: usr.FamilyName.String}
+		UserID: utils.Int64ToStr(usr.UserID),
+		Email:  usr.Email, Role: []string{"1"}}
 
 	refreshToken, err := tokenutil.CreateRefreshToken(
 		user, uc.Cfg.JWT.RefreshTokenSecret,
@@ -89,17 +92,17 @@ func (uc *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 		uc.Log.Error(logging.JWT, logging.GenerateToken, err.Error(), nil)
 		return dtos.LoginResponse{}, "", err
 	}
+
+	//TODO - Updated User Refresh Token
 	tokenPr := pgdb.UpdateRefreshTokenParams{
 		Refreshtoken: refreshToken, AppID: claims.Sub,
 	}
-
-	//TODO - Updated User Refresh Token
 	err = uc.UR.UpdateRefreshToken(ctx, tokenPr)
 	if err != nil {
 		return dtos.LoginResponse{}, "", err
 	}
 
-	//TODO - Generated Access Token
+	// TODO - Generated Access Token
 	accessToken, err := tokenutil.CreateAccessToken(
 		user, uc.Cfg.JWT.RefreshTokenSecret,
 		uc.Cfg.JWT.RefreshTokenExpireHour)

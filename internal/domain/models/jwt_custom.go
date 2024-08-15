@@ -5,12 +5,9 @@ import (
 )
 
 type JwtCustomClaims struct {
-	ID         string   `json:"id"`
-	Email      string   `json:"email"`
-	Picture    string   `json:"picture"`
-	Role       []string `json:"role"`
-	GivenName  string   `json:"given_name"`
-	FamilyName string   `json:"family_name"`
+	ID    string   `json:"id"`
+	Email string   `json:"email"`
+	Role  []string `json:"role"`
 	jwt.MapClaims
 }
 

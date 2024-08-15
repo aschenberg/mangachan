@@ -11,21 +11,21 @@ INSERT INTO users (
 	email,
   picture,
 	role,
-	is_active,
 	given_name,
 	family_name,
 	name,
 	refresh_token,
 	is_deleted,
+	is_active,
 	created_at,
 	updated_at
 ) VALUES (
-  @id,@appId,@email,@picture,@role, @isActive,@givenName,@familyName,@name,@refreshToken,@isDeleted,@createdAt,@updatedAt
+  @userid,@appid,@mail,@pic,@roles,@givenname,@familyname,@name,@refreshtoken,@isdeleted,@isactive,@createdat,@updatedat
 ) ON CONFLICT (app_id) DO UPDATE SET 
-picture = COALESCE(sqlc.narg('picture'),picture),
-given_name = COALESCE(sqlc.narg('given_name'),given_name),
-family_name = COALESCE(sqlc.narg('family_name'),family_name),
-name = COALESCE(sqlc.narg('name'),name)
+picture = @picture,
+given_name = @given_name,
+family_name = @family_name,
+name = @name
 RETURNING *, CASE WHEN xmax = 0 THEN 'inserted' ELSE 'updated' END as operation;
 
 -- name: UpdateRefreshToken :exec

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
 	email VARCHAR(100) UNIQUE NOT NULL,
 	picture TEXT,
 	role SMALLINT NOT NULL,
-	is_active BOOLEAN NOT NULL,
+	is_active BOOLEAN NOT NULL DEFAULT TRUE,
 	given_name TEXT,
 	family_name TEXT,
 	name TEXT,

@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"manga/api"
 	"manga/config"
+	"manga/internal/app"
 	"manga/pkg/httpserver"
 	"manga/pkg/logging"
 )
@@ -15,7 +15,7 @@ import (
 func main() {
 	cfg := config.NewConfig()
 	log := logging.NewLogger(cfg)
-	httpServer := api.InitServer(cfg, log)
+	httpServer := app.InitServer(cfg, log)
 	err := waitForSignals(log, httpServer)
 	shutdown(err, httpServer, log)
 

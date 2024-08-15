@@ -18,14 +18,23 @@ type Manga struct {
 	CoverID      int64     `json:"cover_id"`
 	Type         string    `json:"type"`
 	Country      string    `json:"country"`
-	Published    string    `json:"published"`
 	Status       string    `json:"status"`
-	Authors      []string  `json:"authors"`
-	Artists      []string  `json:"artists"`
-	Score        float64   `json:"score"`
-	Summary      string    `json:"summary"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	CreatedAt    time.Time `json:"created_at"`
+}
+
+type MangaDetail struct {
+	Detail_ID int64     `json:"detail_id"`
+	Published string    `json:"published"`
+	Authors   []string  `json:"authors"`
+	Artists   []string  `json:"artists"`
+	Summary   string    `json:"summary"`
+	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+type MangaScrore struct {
+	ScoreID int64   `json:"score_id"`
+	Score   float64 `json:"score"`
 }
 
 type Genre struct {

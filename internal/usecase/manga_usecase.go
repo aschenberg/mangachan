@@ -2,15 +2,13 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"manga/internal/domain"
 	"manga/internal/domain/dtos"
 	"manga/internal/domain/models"
 	"manga/pkg"
-	"manga/pkg/fileutils"
 	"manga/pkg/flake"
-	"manga/pkg/imagekio"
-	"manga/pkg/utils"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -40,17 +38,7 @@ func (mu *mangaUsecase) Create(c context.Context, manga dtos.CreateManga) error 
 	if err != nil {
 		return pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "error generate spaceflake")
 	}
-
-	result, err := imagekio.UploadSingle(ctx, manga.Cover, newId, utils.Int64ToStr(imgID), "jpg")
-	if err != nil {
-		return pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "error send image")
-	}
-
-	err = fileutils.SaveFileFromURL(result.Data.Url, newId)
-	if err != nil {
-		return err
-	}
-
+	fmt.Print(imgID)
 	newManga := models.Manga{
 		Manga_ID:     newId,
 		Title:        manga.Title,
@@ -58,15 +46,9 @@ func (mu *mangaUsecase) Create(c context.Context, manga dtos.CreateManga) error 
 		Synonyms:     manga.Synonyms,
 		Type:         manga.Type,
 
-		Country:   manga.Country,
-		Published: manga.Published,
-		Status:    manga.Status,
-		Authors:   manga.Authors,
-		Artists:   manga.Artists,
+		Country: manga.Country,
+		Status:  manga.Status,
 
-		Score: manga.Score,
-
-		Summary:   manga.Summary,
 		UpdatedAt: nowTime,
 		CreatedAt: nowTime,
 	}
@@ -76,7 +58,6 @@ func (mu *mangaUsecase) Create(c context.Context, manga dtos.CreateManga) error 
 func (mu *mangaUsecase) FindById(c context.Context, id string) (models.Manga, error) {
 	ctx, cancel := context.WithTimeout(c, mu.contextTimeout)
 	defer cancel()
-	print(id)
 	err := mu.redis.Set(ctx, id, id, 10*time.Second).Err()
 	if err != nil {
 		return models.Manga{}, err

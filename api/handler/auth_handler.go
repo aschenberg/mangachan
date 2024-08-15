@@ -56,9 +56,11 @@ func (lc *AuthHandler) Login(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, helper.GenerateBaseResponseWithAnyError(nil, false, helper.InternalError, err.Error()))
 		return
 	}
-	if status == "insert" {
+	if status == "inserted" {
 		c.JSON(http.StatusCreated, user)
-	} else if status == "update" {
+
+	} else if status == "updated" {
 		c.JSON(http.StatusOK, user)
+
 	}
 }
