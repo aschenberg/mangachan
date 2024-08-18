@@ -6,12 +6,12 @@ import (
 	"manga/internal/domain/models"
 )
 
-type MangaRepository interface {
+type IMangaRepository interface {
 	Create(c context.Context, manga models.Manga) error
 	FindById(c context.Context, id string) (models.Manga, error)
 }
 
 type MangaUsecase interface {
 	Create(c context.Context, manga dtos.CreateManga) error
-	FindById(c context.Context, id string) (models.Manga, error)
+	// FindById(c context.Context, id string) (models.Manga, error)
 }

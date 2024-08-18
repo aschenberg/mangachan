@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -71,4 +72,11 @@ func StrIsEmpty(value string) bool {
 	} else {
 		return true
 	}
+}
+
+// ANCHOR - Pgx Converter
+func FloatToPgNum(value float64) pgtype.Numeric {
+	var x pgtype.Numeric
+	x.Scan(strconv.FormatFloat(value, 'f', 2, 64))
+	return x
 }

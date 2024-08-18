@@ -37,6 +37,15 @@ type MangaScrore struct {
 	Score   float64 `json:"score"`
 }
 
+type MangaCover struct {
+	CoverID     string   `json:"cover_id"`
+	CoverDetail string   `json:"cover_detail"`
+	Thumbnail   string   `json:"thumbnail"`
+	Extra       []string `json:"extra"`
+	UpdatedAt   int64    `json:"updated_at"`
+	CreatedAt   int64    `json:"created_at"`
+}
+
 type Genre struct {
 	GenreID int    `json:"genre_id"`
 	Name    string `json:"name"`

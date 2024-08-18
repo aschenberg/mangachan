@@ -13,7 +13,7 @@ type userRepository struct {
 	Log logging.Logger
 }
 
-func NewUserRepository(pg *postgres.Postgres, Log logging.Logger) domain.UserRepository {
+func NewUserRepository(pg *postgres.Postgres, Log logging.Logger) domain.IUserRepository {
 	return &userRepository{
 		q:   pgdb.New(pg.Pool),
 		Log: Log,

@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS genre (
+	genre_id BIGINT PRIMARY KEY,
+	title TEXT UNIQUE NOT NULL,
+	created_at BIGINT NOT NULL,
+	updated_at BIGINT NOT NULL
+);

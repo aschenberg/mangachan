@@ -9,7 +9,7 @@ const (
 	CollectionUser = "users"
 )
 
-type UserRepository interface {
+type IUserRepository interface {
 	CreateOrUpdate(c context.Context, user pgdb.CreateOrUpdateUserParams) (pgdb.CreateOrUpdateUserRow, error)
 	UpdateRefreshToken(c context.Context, token pgdb.UpdateRefreshTokenParams) error
 }

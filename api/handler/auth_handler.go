@@ -57,10 +57,10 @@ func (lc *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 	if status == "inserted" {
-		c.JSON(http.StatusCreated, user)
+		c.JSON(http.StatusCreated, helper.GenerateBaseResponse(helper.WithPaginate(user, nil), true, helper.Success))
 
 	} else if status == "updated" {
-		c.JSON(http.StatusOK, user)
+		c.JSON(http.StatusOK, helper.GenerateBaseResponse(helper.WithPaginate(user, nil), true, helper.Success))
 
 	}
 }

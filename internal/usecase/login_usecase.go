@@ -21,13 +21,13 @@ type ILoginUsecase interface {
 }
 
 type loginUsecase struct {
-	UR             domain.UserRepository
+	UR             domain.IUserRepository
 	contextTimeout time.Duration
 	Cfg            *config.Config
 	Log            logging.Logger
 }
 
-func NewLoginUsecase(UR domain.UserRepository, cfg *config.Config, timeout time.Duration, log logging.Logger) ILoginUsecase {
+func NewLoginUsecase(UR domain.IUserRepository, cfg *config.Config, timeout time.Duration, log logging.Logger) ILoginUsecase {
 	return &loginUsecase{
 		UR:             UR,
 		contextTimeout: timeout,

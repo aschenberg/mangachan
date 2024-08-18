@@ -2,65 +2,60 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 
 	"manga/internal/domain"
 	"manga/internal/domain/dtos"
-	"manga/internal/domain/models"
-	"manga/pkg"
-	"manga/pkg/flake"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
+type IMangaUsecase interface {
+	Create(c context.Context, m dtos.CreateManga) (dtos.CreatedMangaResponse, error)
+}
 type mangaUsecase struct {
-	mangaRepository domain.MangaRepository
-	contextTimeout  time.Duration
-	redis           *redis.Client
+	uowRepository  domain.IUOWRepository
+	contextTimeout time.Duration
+	redis          *redis.Client
 }
 
-func NewMangaUsecase(mangaRepository domain.MangaRepository, timeout time.Duration, redis *redis.Client) domain.MangaUsecase {
+func NewMangaUsecase(uowRepository domain.IUOWRepository, timeout time.Duration, redis *redis.Client) IMangaUsecase {
 	return &mangaUsecase{
-		mangaRepository: mangaRepository,
-		contextTimeout:  timeout,
-		redis:           redis,
+		uowRepository:  uowRepository,
+		contextTimeout: timeout,
+		redis:          redis,
 	}
 }
 
-func (mu *mangaUsecase) Create(c context.Context, manga dtos.CreateManga) error {
-	var err error
+func (mu *mangaUsecase) Create(c context.Context, m dtos.CreateManga) (dtos.CreatedMangaResponse, error) {
 	ctx, cancel := context.WithTimeout(c, 30*time.Second)
 	defer cancel()
-	newId, err := flake.GenerateID(1, 2, 1)
-	nowTime := time.Now().UTC()
-	imgID, err := flake.GenerateID(2, 1, 1)
-	if err != nil {
-		return pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "error generate spaceflake")
+	mg := dtos.CreateManga{
+		Title:        m.Title,
+		TitleEnglish: m.TitleEnglish,
+		Synonyms:     m.Synonyms,
+		Type:         m.Type,
+		Published:    m.Published,
+		Country:      m.Country,
+		Status:       m.Status,
+		Authors:      m.Authors,
+		Artists:      m.Artists,
+		Genres:       m.Genres,
+		Themes:       m.Themes,
+		Demographic:  m.Demographic,
+		Summary:      m.Summary,
+		Score:        m.Score,
+		Cover:        m.Cover,
 	}
-	fmt.Print(imgID)
-	newManga := models.Manga{
-		Manga_ID:     newId,
-		Title:        manga.Title,
-		TitleEnglish: manga.TitleEnglish,
-		Synonyms:     manga.Synonyms,
-		Type:         manga.Type,
-
-		Country: manga.Country,
-		Status:  manga.Status,
-
-		UpdatedAt: nowTime,
-		CreatedAt: nowTime,
-	}
-	return mu.mangaRepository.Create(ctx, newManga)
+	return mu.uowRepository.CreateManga(ctx, mg)
 }
 
-func (mu *mangaUsecase) FindById(c context.Context, id string) (models.Manga, error) {
-	ctx, cancel := context.WithTimeout(c, mu.contextTimeout)
-	defer cancel()
-	err := mu.redis.Set(ctx, id, id, 10*time.Second).Err()
-	if err != nil {
-		return models.Manga{}, err
-	}
-	return mu.mangaRepository.FindById(ctx, id)
-}
+// func (mu *mangaUsecase) FindById(c context.Context, id string) (models.Manga, error) {
+// 	ctx, cancel := context.WithTimeout(c, mu.contextTimeout)
+// 	defer cancel()
+// 	err := mu.redis.Set(ctx, id, id, 10*time.Second).Err()
+// 	if err != nil {
+// 		return models.Manga{}, err
+// 	}
+// 	return mu.mangaRepository.FindById(ctx, id)
+// }

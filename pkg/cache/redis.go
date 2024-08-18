@@ -12,25 +12,28 @@ import (
 
 var redisClient *redis.Client
 
-func InitRedis(cfg *config.Config) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30)
+func InitRedis(cfg *config.Config) (*redis.Client, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	redisClient = redis.NewClient(&redis.Options{
-		Addr:         fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
-		Password:     cfg.Redis.Password,
-		DB:           0,
-		DialTimeout:  cfg.Redis.DialTimeout * time.Second,
-		ReadTimeout:  cfg.Redis.ReadTimeout * time.Second,
-		WriteTimeout: cfg.Redis.WriteTimeout * time.Second,
-		PoolSize:     cfg.Redis.PoolSize,
-		PoolTimeout:  cfg.Redis.PoolTimeout,
+		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
+		Password: cfg.Redis.Password,
+		DB:       0,
+		// DialTimeout:  cfg.Redis.DialTimeout * time.Second,
+		// ReadTimeout:  cfg.Redis.ReadTimeout * time.Second,
+		// WriteTimeout: cfg.Redis.WriteTimeout * time.Second,
+		// PoolSize:     cfg.Redis.PoolSize,
+		// PoolTimeout:  cfg.Redis.PoolTimeout,
 	})
 
-	_, err := redisClient.Ping(ctx).Result()
+	res, err := redisClient.Ping(ctx).Result()
 	if err != nil {
-		return err
+		return &redis.Client{}, err
 	}
-	return nil
+
+	fmt.Printf(res)
+
+	return redisClient, nil
 }
 
 func GetRedis() *redis.Client {

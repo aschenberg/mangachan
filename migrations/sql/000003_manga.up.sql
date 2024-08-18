@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS manga (
 	manga_id BIGINT PRIMARY KEY,
-	title VARCHAR NOT NULL,
+	title VARCHAR UNIQUE NOT NULL,
 	title_en VARCHAR,
-	synonyms TEXT,
+	synonyms TEXT[],
 	cover_id BIGINT NOT NULL,
 	type VARCHAR NOT NULL,
 	country VARCHAR NOT NULL,

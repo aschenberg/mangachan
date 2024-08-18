@@ -8,17 +8,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Genre struct {
+	GenreID   int64
+	Title     string
+	CreatedAt int64
+	UpdatedAt int64
+}
+
 type Manga struct {
 	MangaID   int64
 	Title     string
 	TitleEn   pgtype.Text
-	Synonyms  pgtype.Text
+	Synonyms  []string
 	CoverID   int64
 	Type      string
 	Country   string
 	Status    pgtype.Text
 	CreatedAt int64
 	UpdatedAt int64
+}
+
+type MangaCover struct {
+	CoverID     int64
+	CoverDetail pgtype.Text
+	Thumbnail   pgtype.Text
+	Extra       []string
+	CreatedAt   int64
+	UpdatedAt   int64
 }
 
 type MangaDetail struct {
@@ -29,6 +45,14 @@ type MangaDetail struct {
 	Summary   pgtype.Text
 	UpdatedAt int64
 	CreatedAt int64
+}
+
+type MangaGenre struct {
+	MgID      int64
+	MangaID   int64
+	GenreID   int64
+	CreatedAt int64
+	UpdatedAt int64
 }
 
 type MangaScore struct {

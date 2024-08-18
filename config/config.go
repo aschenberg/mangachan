@@ -18,6 +18,7 @@ type Config struct {
 	Postgre  PostgreConfig
 	Redis    RedisConfig
 	Password PasswordConfig
+	Minio    MinioConfig
 	Cors     CorsConfig
 	Logger   LoggerConfig
 	Otp      OtpConfig
@@ -83,6 +84,16 @@ type PostgreConfig struct {
 	PG_Host          string `env:"PG_HOST"`
 	PG_Name          string `env:"PG_NAME"`
 	PG_MIGRATION_URL string `env:"PG_MIGRATION_URL"`
+}
+
+type MinioConfig struct {
+	EndPoint  string `env:"MINIO_ENDPOINT"`
+	AccessKey string `env:"MINIO_ACCESS_KEY"`
+	SecretKey string `env:"MINIO_SECRET_KEY"`
+	Region    string `env:"MINIO_REGION"`
+	Bucket1   string `env:"MINIO_BUCKET1"`
+	Bucket2   string `env:"MINIO_BUCKET2"`
+	SSL       bool   `env:"MINIO_SSL"`
 }
 
 type CorsConfig struct {

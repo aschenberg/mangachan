@@ -11,6 +11,7 @@ const (
 	JWT             Category = "JWT"
 	Postgres        Category = "Postgres"
 	Snowflake       Category = "SnowFlake"
+	S3              Category = "S3"
 	Redis           Category = "Redis"
 	Validation      Category = "Validation"
 	RequestResponse Category = "RequestResponse"
@@ -26,11 +27,14 @@ const (
 	Migration SubCategory = "Migration"
 	Select    SubCategory = "Select"
 	Rollback  SubCategory = "Rollback"
+	CreateTx  SubCategory = "CreateTx"
 	Update    SubCategory = "Update"
 	Delete    SubCategory = "Delete"
 	Insert    SubCategory = "Insert"
 	Upsert    SubCategory = "Upsert"
 
+	//S3 Storage
+	IsExist       SubCategory = "IsExist"
 	CreatedID     SubCategory = "CreateID"
 	GenerateToken SubCategory = "GenerateToken"
 	// Internal

@@ -6,7 +6,7 @@ services:
     container_name: keydb
     # command: keydb-server /etc/keydb/redis.conf --server-threads 2 --active-replica yes --replicaof 192.168.1.1 6379
     # command: keydb-server /etc/keydb/redis.conf --server-threads 2 --active-replica yes --replicaof 192.168.1.2 6379
-    command: keydb-server /etc/keydb/redis.conf --server-threads 2
+    command: keydb-server /etc/keydb/keydb.conf --server-threads 2
     volumes:
       - keydb-data:/data
       - ./keydb.conf:/etc/keydb/keydb.conf
@@ -49,8 +49,37 @@ services:
     volumes:
       - arangodb_data_container:/var/lib/arangodb3
       - arangodb_apps_data_container:/var/lib/arangodb3-apps
-   
-
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: i3mk0TPcGg8AURfm2HRN
+      MINIO_ROOT_PASSWORD: RoCG6bHY3M8AtCWoG5pRjPRVesl5lCoI83PTd7LG
+    networks:
+      - mangachan_net
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000" # MinIO API port
+      - "9001:9001" # MinIO console port
+  imagor:
+    image: ghcr.io/cshum/imagor:latest
+    container_name: imagor
+    environment:
+      IMAGOR_LOADER: "s3"
+      IMAGOR_S3_ENDPOINT: "localhost:9000"
+      IMAGOR_S3_REGION: "us-east-1"
+      IMAGOR_S3_BUCKET: "imagor-bucket"
+      IMAGOR_S3_ACCESS_KEY_ID: "i3mk0TPcGg8AURfm2HRN"
+      IMAGOR_S3_SECRET_ACCESS_KEY: "RoCG6bHY3M8AtCWoG5pRjPRVesl5lCoI83PTd7LG"
+      IMAGOR_S3_SAFE_CHARS: "/"
+      IMAGOR_S3_FORCE_PATH_STYLE: "true"
+      IMAGOR_STORAGE: "s3"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - minio
 networks:
   mangachan_net:
     driver: bridge  
@@ -60,3 +89,4 @@ volumes:
   arangodb_apps_data_container:
   keydb-data:
   pgdata:
+  minio_data:
