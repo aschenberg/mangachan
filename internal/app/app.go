@@ -1,63 +1,109 @@
 package app
 
 import (
+	"context"
+	"fmt"
 	"manga/api/route"
 	"manga/config"
-	"manga/pkg/cache"
-	"manga/pkg/httpserver"
+	"manga/internal/domain/dtos"
+	pgsql "manga/internal/infra/pgsql/repository"
+	"manga/pkg"
 	"manga/pkg/logging"
-	"manga/pkg/openid"
-	"manga/pkg/postgres"
-	"manga/pkg/s3"
+	"os"
+	"time"
 
-	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-gonic/gin"
-	"github.com/minio/minio-go/v7"
-	"github.com/redis/go-redis/v9"
-	"golang.org/x/oauth2"
+	"github.com/streadway/amqp"
 )
 
-func InitServer(cfg *config.Config, log logging.Logger) *httpserver.Server {
+func InitServer(cfg *config.Config, log logging.Logger) *pkg.Server {
 
 	// arangoC := arango.NewArangoDatabase(cfg)
 	// db := arango.ConnectDatabase(arangoC, cfg)
-
-	openIDProvider := openid.NewOidcProvider(cfg)
-	openIDCfg := openid.NewOidcConfig(cfg, openIDProvider)
-	redisC, err := cache.InitRedis(cfg)
-	if err != nil {
-		log.Fatal(logging.Redis, logging.Startup, err.Error(), nil)
-	}
-	minio, err := s3.InitS3Storage(cfg, log)
-	if err != nil {
-		log.Fatal(logging.S3, logging.Startup, err.Error(), nil)
-	}
 	gin.SetMode(cfg.Server.RunMode)
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.String(200, "Hello, World!!!")
 	})
-	pg, err := postgres.InitPg(cfg)
+	// OpenID Initialized
+	openIDProvider := pkg.NewOidcProvider(cfg)
+	openIDCfg := pkg.NewOidcConfig(cfg, openIDProvider)
+
+	ml := pkg.NewMeili(cfg)
+
+	// Redis Initialized
+	redisC, err := pkg.NewRedis(cfg)
+	if err != nil {
+		log.Fatal(logging.Redis, logging.Startup, err.Error(), nil)
+	}
+
+	// S3 Storage Initialized
+	minio, err := pkg.NewS3Storage(cfg, log)
+	if err != nil {
+		log.Fatal(logging.S3, logging.Startup, err.Error(), nil)
+	}
+
+	// PostgreSQL Initialized
+	pg, err := pkg.NewPg(cfg)
 	if err != nil {
 		log.Fatal(logging.Postgres, logging.Startup, err.Error(), nil)
 	}
-	RegisterRoutes(r, cfg, pg, openIDCfg, openIDProvider, redisC, minio, log)
 
-	httpserverServer := httpserver.New(cfg, r)
-	return httpserverServer
-}
+	// Rabbit Mq Initialized
+	rmq, err := pkg.NewRabbitMQ(cfg)
+	if err != nil {
+		log.Fatal(logging.Rabbit, logging.Startup, err.Error(), nil)
+	}
 
-func RegisterRoutes(gin *gin.Engine, cfg *config.Config, pg *postgres.Postgres, oidcCfg *oauth2.Config, oidcPvd *oidc.Provider, redis *redis.Client, minio *minio.Client, log logging.Logger) {
+	defer rmq.Close()
 
-	// Al l Public APIs
-	api := gin.Group("/api")
+	err = rmq.Consume("manga", func(d amqp.Delivery) {
+		if string(d.Body) != "" {
+			mgr := pgsql.NewMangaRepository(pg, log)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cancel()
+			mg, err := mgr.FindbyId(ctx, string(d.Body))
+			if err != nil {
+				fmt.Sprintf(err.Error())
+			}
+			genre, err := mgr.FindMangaGenre(ctx, string(d.Body))
+			if err != nil {
+				fmt.Sprintf(err.Error())
+			}
+			res := dtos.ToManga(mg, genre)
+
+			index := ml.Index("Manga")
+			documents := []map[string]interface{}{
+				{"id": res.MangaID,
+					"title":    res.Title,
+					"thumb":    res.Cover.Thumbnail,
+					"synonyms": res.Synonyms,
+					"genres":   res.Genres,
+					"score":    res.Score,
+					"status":   res.Status,
+					"type":     res.Type},
+			}
+			_, err = index.AddDocuments(documents)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+
+	})
+
+	// Gin Route Initialized
+	api := r.Group("/api")
 	v1 := api.Group("/v1")
 	m := v1.Group("/m")
 	{
 		auth := m.Group("/auth")
-		route.Auth(auth, cfg, pg, oidcCfg, oidcPvd, log)
+		route.Auth(auth, cfg, pg, openIDCfg, openIDProvider, log)
 		manga := m.Group("/manga")
-		route.Manga(manga, cfg, pg, redis, minio, log)
+		route.Manga(manga, cfg, pg, redisC, minio, rmq, ml, log)
 	}
 
+	httpserverServer := pkg.NewHttp(cfg, r)
+	return httpserverServer
 }

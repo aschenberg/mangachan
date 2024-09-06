@@ -66,13 +66,47 @@ func (q *Queries) CreateManga(ctx context.Context, arg CreateMangaParams) (Creat
 }
 
 const findMangaByID = `-- name: FindMangaByID :one
-SELECT manga_id, title, title_en, synonyms, cover_id, type, country, status, created_at, updated_at FROM manga
-WHERE manga_id = $1 LIMIT 1
+SELECT manga_id, title, title_en, synonyms, a.cover_id, type, country, status, a.created_at, a.updated_at, detail_id, published, authors, artist, source, summary, b.updated_at, b.created_at, score_id, score, c.created_at, c.updated_at, d.cover_id, cover_detail, thumbnail, extra, d.created_at, d.updated_at FROM manga AS a 
+LEFT JOIN manga_detail AS b ON a.manga_id = b.detail_id 
+LEFT JOIN manga_score AS c ON a.manga_id = c.score_id
+LEFT JOIN manga_cover AS d ON a.manga_id = d.cover_id
+WHERE a.manga_id = $1 LIMIT 1
 `
 
-func (q *Queries) FindMangaByID(ctx context.Context, mangaID int64) (Manga, error) {
+type FindMangaByIDRow struct {
+	MangaID     int64
+	Title       string
+	TitleEn     pgtype.Text
+	Synonyms    []string
+	CoverID     int64
+	Type        string
+	Country     string
+	Status      pgtype.Text
+	CreatedAt   int64
+	UpdatedAt   int64
+	DetailID    pgtype.Int8
+	Published   pgtype.Text
+	Authors     []string
+	Artist      []string
+	Source      pgtype.Text
+	Summary     pgtype.Text
+	UpdatedAt_2 pgtype.Int8
+	CreatedAt_2 pgtype.Int8
+	ScoreID     pgtype.Int8
+	Score       pgtype.Numeric
+	CreatedAt_3 pgtype.Int8
+	UpdatedAt_3 pgtype.Int8
+	CoverID_2   pgtype.Int8
+	CoverDetail pgtype.Text
+	Thumbnail   pgtype.Text
+	Extra       []string
+	CreatedAt_4 pgtype.Int8
+	UpdatedAt_4 pgtype.Int8
+}
+
+func (q *Queries) FindMangaByID(ctx context.Context, mangaID int64) (FindMangaByIDRow, error) {
 	row := q.db.QueryRow(ctx, findMangaByID, mangaID)
-	var i Manga
+	var i FindMangaByIDRow
 	err := row.Scan(
 		&i.MangaID,
 		&i.Title,
@@ -84,6 +118,24 @@ func (q *Queries) FindMangaByID(ctx context.Context, mangaID int64) (Manga, erro
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DetailID,
+		&i.Published,
+		&i.Authors,
+		&i.Artist,
+		&i.Source,
+		&i.Summary,
+		&i.UpdatedAt_2,
+		&i.CreatedAt_2,
+		&i.ScoreID,
+		&i.Score,
+		&i.CreatedAt_3,
+		&i.UpdatedAt_3,
+		&i.CoverID_2,
+		&i.CoverDetail,
+		&i.Thumbnail,
+		&i.Extra,
+		&i.CreatedAt_4,
+		&i.UpdatedAt_4,
 	)
 	return i, err
 }

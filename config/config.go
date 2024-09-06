@@ -23,6 +23,10 @@ type Config struct {
 	Logger   LoggerConfig
 	Otp      OtpConfig
 	Oidc     OIDC
+	Source   MangaSource
+	Imagor   ImagorConfig
+	RabbitMq RabbitMQConfig
+	Meili    MeiliSearchConfig
 }
 
 type ServerConfig struct {
@@ -65,6 +69,11 @@ type RedisConfig struct {
 	IdleCheckFrequency time.Duration `env:"REDIS_IDLE_CHECK_FREQ"`
 	PoolSize           int           `env:"REDIS_POOLSIZE"`
 	PoolTimeout        time.Duration `env:"REDIS_POOL_TIMEOUT"`
+}
+
+type ImagorConfig struct {
+	Host string `env:"IMAGOR_HOST"`
+	Port string `env:"IMAGOR_PORT"`
 }
 
 type PasswordConfig struct {
@@ -111,6 +120,24 @@ type OIDC struct {
 	ClientSecret string `env:"OIDC_CLIENT_SECRET"`
 	RedirectUrl  string `env:"OIDC_REDIRECT_URL"`
 	IssuerUrl    string `env:"OIDC_ISSUER_URL"`
+}
+
+type MangaSource struct {
+	MyAnimeList string `env:"MANGA_MY_ANIME_LIST"`
+	MangaUpdate string `env:"MANGA_MANGA_UPDATE"`
+}
+
+type RabbitMQConfig struct {
+	Host     string `env:"RABBITMQ_HOST"`
+	Port     string `env:"RABBITMQ_PORT"`
+	User     string `env:"RABBITMQ_USER"`
+	Password string `env:"RABBITMQ_PASSWORD"`
+}
+
+type MeiliSearchConfig struct {
+	Host   string `env:"MEILI_HOST"`
+	Port   string `env:"MEILI_PORT"`
+	ApiKey string `env:"MEILI_API_KEY"`
 }
 
 func NewConfig() *Config {

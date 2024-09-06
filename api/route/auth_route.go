@@ -6,8 +6,8 @@ import (
 
 	pgsql "manga/internal/infra/pgsql/repository"
 	"manga/internal/usecase"
+	"manga/pkg"
 	"manga/pkg/logging"
-	"manga/pkg/postgres"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -15,7 +15,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func Auth(group *gin.RouterGroup, cfg *config.Config, pg *postgres.Postgres, oidcCfg *oauth2.Config, provider *oidc.Provider, log logging.Logger) {
+func Auth(group *gin.RouterGroup, cfg *config.Config, pg *pkg.Postgres, oidcCfg *oauth2.Config, provider *oidc.Provider, log logging.Logger) {
 	ar := pgsql.NewUserRepository(pg, log)
 	au := usecase.NewLoginUsecase(ar, cfg, 10*time.Second, log)
 	ah := handler.NewAuthHandler(au, cfg, oidcCfg, provider)

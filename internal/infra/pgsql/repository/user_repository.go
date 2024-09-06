@@ -4,8 +4,8 @@ import (
 	"context"
 	"manga/internal/domain"
 	"manga/internal/infra/pgsql/pgdb"
+	"manga/pkg"
 	"manga/pkg/logging"
-	"manga/pkg/postgres"
 )
 
 type userRepository struct {
@@ -13,7 +13,7 @@ type userRepository struct {
 	Log logging.Logger
 }
 
-func NewUserRepository(pg *postgres.Postgres, Log logging.Logger) domain.IUserRepository {
+func NewUserRepository(pg *pkg.Postgres, Log logging.Logger) domain.IUserRepository {
 	return &userRepository{
 		q:   pgdb.New(pg.Pool),
 		Log: Log,

@@ -5,9 +5,11 @@ type SubCategory string
 type ExtraKey string
 
 const (
-	General         Category = "General"
-	IO              Category = "IO"
-	Internal        Category = "Internal"
+	General  Category = "General"
+	IO       Category = "IO"
+	Internal Category = "Internal"
+
+	Http            Category = "Http"
 	JWT             Category = "JWT"
 	Postgres        Category = "Postgres"
 	Snowflake       Category = "SnowFlake"
@@ -16,11 +18,13 @@ const (
 	Validation      Category = "Validation"
 	RequestResponse Category = "RequestResponse"
 	Prometheus      Category = "Prometheus"
+	Rabbit          Category = "Rabbit"
 )
 
 const (
 	// General
 	Startup         SubCategory = "Startup"
+	Shutdown        SubCategory = "Shutdown"
 	ExternalService SubCategory = "ExternalService"
 
 	// Postgres
@@ -47,8 +51,14 @@ const (
 	MobileValidation   SubCategory = "MobileValidation"
 	PasswordValidation SubCategory = "PasswordValidation"
 
+	// Http
+	HttpError SubCategory = "HttpError"
 	// IO
 	RemoveFile SubCategory = "RemoveFile"
+
+	//Rabbit
+	Publish  SubCategory = "Publish"
+	Received SubCategory = "Received"
 )
 
 const (
@@ -59,6 +69,7 @@ const (
 	Method       ExtraKey = "Method"
 	StatusCode   ExtraKey = "StatusCode"
 	BodySize     ExtraKey = "BodySize"
+	BodyData     ExtraKey = "BodyData"
 	Path         ExtraKey = "Path"
 	Latency      ExtraKey = "Latency"
 	RequestBody  ExtraKey = "RequestBody"

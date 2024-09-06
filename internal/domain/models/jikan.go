@@ -23,15 +23,15 @@ type JikanMangaByID struct {
 			Type  string `json:"type"`
 			Title string `json:"title"`
 		} `json:"titles"`
-		Title         string   `json:"title"`
-		TitleEnglish  any      `json:"title_english"`
-		TitleJapanese string   `json:"title_japanese"`
-		TitleSynonyms []string `json:"title_synonyms"`
-		Type          string   `json:"type"`
-		Chapters      int      `json:"chapters"`
-		Volumes       int      `json:"volumes"`
-		Status        string   `json:"status"`
-		Publishing    bool     `json:"publishing"`
+		Title         string      `json:"title"`
+		TitleEnglish  string      `json:"title_english"`
+		TitleJapanese string      `json:"title_japanese"`
+		TitleSynonyms []string    `json:"title_synonyms"`
+		Type          string      `json:"type"`
+		Chapters      interface{} `json:"chapters"`
+		Volumes       int         `json:"volumes"`
+		Status        string      `json:"status"`
+		Publishing    bool        `json:"publishing"`
 		Published     struct {
 			From time.Time `json:"from"`
 			To   time.Time `json:"to"`
@@ -49,58 +49,27 @@ type JikanMangaByID struct {
 			} `json:"prop"`
 			String string `json:"string"`
 		} `json:"published"`
-		Score      float64 `json:"score"`
-		Scored     float64 `json:"scored"`
-		ScoredBy   int     `json:"scored_by"`
-		Rank       int     `json:"rank"`
-		Popularity int     `json:"popularity"`
-		Members    int     `json:"members"`
-		Favorites  int     `json:"favorites"`
-		Synopsis   string  `json:"synopsis"`
-		Background string  `json:"background"`
-		Authors    []struct {
-			MalID int    `json:"mal_id"`
-			Type  string `json:"type"`
-			Name  string `json:"name"`
-			URL   string `json:"url"`
-		} `json:"authors"`
-		Serializations []struct {
-			MalID int    `json:"mal_id"`
-			Type  string `json:"type"`
-			Name  string `json:"name"`
-			URL   string `json:"url"`
-		} `json:"serializations"`
-		Genres []struct {
-			MalID int    `json:"mal_id"`
-			Type  string `json:"type"`
-			Name  string `json:"name"`
-			URL   string `json:"url"`
-		} `json:"genres"`
-		ExplicitGenres []any `json:"explicit_genres"`
-		Themes         []struct {
-			MalID int    `json:"mal_id"`
-			Type  string `json:"type"`
-			Name  string `json:"name"`
-			URL   string `json:"url"`
-		} `json:"themes"`
-		Demographics []struct {
-			MalID int    `json:"mal_id"`
-			Type  string `json:"type"`
-			Name  string `json:"name"`
-			URL   string `json:"url"`
-		} `json:"demographics"`
-		Relations []struct {
-			Relation string `json:"relation"`
-			Entry    []struct {
-				MalID int    `json:"mal_id"`
-				Type  string `json:"type"`
-				Name  string `json:"name"`
-				URL   string `json:"url"`
-			} `json:"entry"`
-		} `json:"relations"`
-		External []struct {
-			Name string `json:"name"`
-			URL  string `json:"url"`
-		} `json:"external"`
+		Score          float64       `json:"score"`
+		Scored         float64       `json:"scored"`
+		ScoredBy       int           `json:"scored_by"`
+		Rank           int           `json:"rank"`
+		Popularity     int           `json:"popularity"`
+		Members        int           `json:"members"`
+		Favorites      int           `json:"favorites"`
+		Synopsis       string        `json:"synopsis"`
+		Background     string        `json:"background"`
+		Authors        []MALSubJson  `json:"authors"`
+		Serializations []MALSubJson  `json:"serializations"`
+		Genres         []MALSubJson  `json:"genres"`
+		ExplicitGenres []interface{} `json:"explicit_genres"`
+		Themes         []MALSubJson  `json:"themes"`
+		Demographics   []MALSubJson  `json:"demographics"`
 	} `json:"data"`
+}
+
+type MALSubJson struct {
+	MalID int    `json:"mal_id"`
+	Type  string `json:"type"`
+	Name  string `json:"name"`
+	URL   string `json:"url"`
 }

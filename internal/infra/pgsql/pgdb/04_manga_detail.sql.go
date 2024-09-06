@@ -18,10 +18,11 @@ INSERT INTO manga_detail (
 	authors,
     artist,
 	summary,
+	source,
 	updated_at,
 	created_at
 ) VALUES (
-  $1,$2,$3,$4,$5,$6,$7
+  $1,$2,$3,$4,$5,$6,$7,$8
 )
 `
 
@@ -31,6 +32,7 @@ type CreateMangaDetailParams struct {
 	Authors   []string
 	Artist    []string
 	Summary   pgtype.Text
+	Source    pgtype.Text
 	UpdatedAt int64
 	CreatedAt int64
 }
@@ -42,6 +44,7 @@ func (q *Queries) CreateMangaDetail(ctx context.Context, arg CreateMangaDetailPa
 		arg.Authors,
 		arg.Artist,
 		arg.Summary,
+		arg.Source,
 		arg.UpdatedAt,
 		arg.CreatedAt,
 	)

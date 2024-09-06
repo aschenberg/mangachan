@@ -41,13 +41,13 @@ type MangaCover struct {
 	CoverID     string   `json:"cover_id"`
 	CoverDetail string   `json:"cover_detail"`
 	Thumbnail   string   `json:"thumbnail"`
-	Extra       []string `json:"extra"`
-	UpdatedAt   int64    `json:"updated_at"`
-	CreatedAt   int64    `json:"created_at"`
+	Extra       []string `json:"extra,omitempty"`
+	UpdatedAt   int64    `json:"updated_at,omitempty"`
+	CreatedAt   int64    `json:"created_at,omitempty"`
 }
 
 type Genre struct {
-	GenreID int    `json:"genre_id"`
+	GenreID string `json:"genre_id"`
 	Name    string `json:"name"`
 }
 
@@ -79,4 +79,8 @@ type Rating struct {
 	MangaID primitive.ObjectID `json:"manga_id"`
 	UserID  primitive.ObjectID `json:"user_id"`
 	Score   int                `json:"score"`
+}
+
+type Result struct {
+	Status string `json:"status"`
 }

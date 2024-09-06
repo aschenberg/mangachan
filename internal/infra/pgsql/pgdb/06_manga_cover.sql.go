@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createMangaCover = `-- name: CreateMangaCover :exec
+const createMangaCover = `-- name: CreateMangaCover :one
 INSERT INTO manga_cover (
   cover_id,
   cover_detail,
@@ -21,7 +21,7 @@ INSERT INTO manga_cover (
   created_at
 ) VALUES (
   $1,$2,$3,$4,$5,$6
-)
+) RETURNING cover_id
 `
 
 type CreateMangaCoverParams struct {
@@ -33,8 +33,8 @@ type CreateMangaCoverParams struct {
 	CreatedAt   int64
 }
 
-func (q *Queries) CreateMangaCover(ctx context.Context, arg CreateMangaCoverParams) error {
-	_, err := q.db.Exec(ctx, createMangaCover,
+func (q *Queries) CreateMangaCover(ctx context.Context, arg CreateMangaCoverParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createMangaCover,
 		arg.CoverID,
 		arg.CoverDetail,
 		arg.Thumbnail,
@@ -42,5 +42,7 @@ func (q *Queries) CreateMangaCover(ctx context.Context, arg CreateMangaCoverPara
 		arg.UpdatedAt,
 		arg.CreatedAt,
 	)
-	return err
+	var cover_id int64
+	err := row.Scan(&cover_id)
+	return cover_id, err
 }

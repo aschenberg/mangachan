@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"log"
+	"math"
 	"runtime"
 	"strconv"
 
@@ -79,4 +80,24 @@ func FloatToPgNum(value float64) pgtype.Numeric {
 	var x pgtype.Numeric
 	x.Scan(strconv.FormatFloat(value, 'f', 2, 64))
 	return x
+}
+
+func PgNumToFloat(src pgtype.Numeric) float64 {
+	f, err := strconv.ParseFloat(src.Int.String(), 64)
+	if err != nil {
+		return 0
+	}
+	var roundTo float64 = 1
+	if src.Exp > 0 {
+		for i := 0; i < int(src.Exp); i++ {
+			f *= 10
+			roundTo *= 10
+		}
+	} else if src.Exp < 0 {
+		for i := 0; i > int(src.Exp); i-- {
+			f /= 10
+			roundTo /= 10
+		}
+	}
+	return math.Round(f/roundTo) * roundTo
 }

@@ -1,4 +1,4 @@
--- name: CreateMangaCover :exec
+-- name: CreateMangaCover :one
 INSERT INTO manga_cover (
   cover_id,
   cover_detail,
@@ -8,7 +8,7 @@ INSERT INTO manga_cover (
   created_at
 ) VALUES (
   $1,$2,$3,$4,$5,$6
-);
+) RETURNING cover_id;
 
 
 

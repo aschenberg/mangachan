@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS manga_detail (
 	published VARCHAR,
 	authors TEXT[],
 	artist TEXT[],
+	source TEXT,
 	summary TEXT,
     updated_at BIGINT NOT NULL,
 	created_at BIGINT NOT NULL

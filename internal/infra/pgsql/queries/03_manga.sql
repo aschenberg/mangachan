@@ -16,6 +16,9 @@ INSERT INTO manga (
 RETURNING manga_id,title;
 
 -- name: FindMangaByID :one
-SELECT * FROM manga
-WHERE manga_id = $1 LIMIT 1;
+SELECT * FROM manga AS a 
+LEFT JOIN manga_detail AS b ON a.manga_id = b.detail_id 
+LEFT JOIN manga_score AS c ON a.manga_id = c.score_id
+LEFT JOIN manga_cover AS d ON a.manga_id = d.cover_id
+WHERE a.manga_id = $1 LIMIT 1;
 

@@ -7,6 +7,8 @@ package pgdb
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createMangaGenre = `-- name: CreateMangaGenre :exec
@@ -38,4 +40,52 @@ func (q *Queries) CreateMangaGenre(ctx context.Context, arg CreateMangaGenrePara
 		arg.CreatedAt,
 	)
 	return err
+}
+
+const findMangaGenre = `-- name: FindMangaGenre :many
+SELECT mg_id, manga_id, a.genre_id, a.created_at, a.updated_at, b.genre_id, title, b.created_at, b.updated_at FROM manga_genre AS a 
+LEFT JOIN genre AS b ON a.genre_id = b.genre_id 
+WHERE a.manga_id = $1
+`
+
+type FindMangaGenreRow struct {
+	MgID        int64
+	MangaID     int64
+	GenreID     int64
+	CreatedAt   int64
+	UpdatedAt   int64
+	GenreID_2   pgtype.Int8
+	Title       pgtype.Text
+	CreatedAt_2 pgtype.Int8
+	UpdatedAt_2 pgtype.Int8
+}
+
+func (q *Queries) FindMangaGenre(ctx context.Context, mangaID int64) ([]FindMangaGenreRow, error) {
+	rows, err := q.db.Query(ctx, findMangaGenre, mangaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FindMangaGenreRow{}
+	for rows.Next() {
+		var i FindMangaGenreRow
+		if err := rows.Scan(
+			&i.MgID,
+			&i.MangaID,
+			&i.GenreID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.GenreID_2,
+			&i.Title,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

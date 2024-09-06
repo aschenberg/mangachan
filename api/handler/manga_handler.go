@@ -3,8 +3,10 @@ package handler
 import (
 	"manga/api/helper"
 	"manga/internal/domain/dtos"
+	"manga/internal/domain/enum"
 	"manga/internal/usecase"
 	"net/http"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 )
@@ -38,6 +40,32 @@ func (h *MangaHandler) Create(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, helper.GenerateBaseResponse(res, true, helper.Success))
+
+}
+
+func (h *MangaHandler) Source(c *gin.Context) {
+
+	var sourceList []enum.SourceListResponse
+	for _, name := range enum.SourceName {
+		sourceList = append(sourceList, enum.SourceListResponse{Name: name.Name, Value: name.Source, Url: name.Url})
+	}
+	sort.Slice(sourceList, func(i, j int) bool {
+		return sourceList[i].Value < sourceList[j].Value
+	})
+	c.JSON(http.StatusCreated, helper.GenerateBaseResponse(sourceList, true, helper.Success))
+
+}
+
+func (h *MangaHandler) GetById(c *gin.Context) {
+	idParam := c.Param("id")
+
+	res, err := h.mu.FindById(c, idParam)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helper.GenerateBaseResponseWithAnyError(nil, false, helper.InternalError, err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, helper.GenerateBaseResponse(res, true, helper.Success))
+
 }
 
 // func (h *MangaHandler) FindByID(c *gin.Context) {

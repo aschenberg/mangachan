@@ -42,6 +42,7 @@ type MangaDetail struct {
 	Published pgtype.Text
 	Authors   []string
 	Artist    []string
+	Source    pgtype.Text
 	Summary   pgtype.Text
 	UpdatedAt int64
 	CreatedAt int64

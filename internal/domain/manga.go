@@ -2,16 +2,11 @@ package domain
 
 import (
 	"context"
-	"manga/internal/domain/dtos"
-	"manga/internal/domain/models"
+	"manga/internal/infra/pgsql/pgdb"
 )
 
 type IMangaRepository interface {
-	Create(c context.Context, manga models.Manga) error
-	FindById(c context.Context, id string) (models.Manga, error)
-}
-
-type MangaUsecase interface {
-	Create(c context.Context, manga dtos.CreateManga) error
-	// FindById(c context.Context, id string) (models.Manga, error)
+	CreateCover(c context.Context, cvr pgdb.CreateMangaCoverParams) (int64, error)
+	FindbyId(c context.Context, mangaId string) (pgdb.FindMangaByIDRow, error)
+	FindMangaGenre(c context.Context, mangaId string) ([]pgdb.FindMangaGenreRow, error)
 }

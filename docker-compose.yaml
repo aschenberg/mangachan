@@ -49,37 +49,114 @@ services:
     volumes:
       - arangodb_data_container:/var/lib/arangodb3
       - arangodb_apps_data_container:/var/lib/arangodb3-apps
-  minio:
-    image: minio/minio:latest
-    container_name: minio
+  rabbit_mq:
+    image: rabbitmq:4.0-rc-management
+    container_name: rabbit_mq
+    ports:
+      - 5672:5672   # for sender and consumer connections
+      - 15672:15672 # for serve RabbitMQ GUI
     environment:
-      MINIO_ROOT_USER: i3mk0TPcGg8AURfm2HRN
-      MINIO_ROOT_PASSWORD: RoCG6bHY3M8AtCWoG5pRjPRVesl5lCoI83PTd7LG
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}    # Custom username
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: always
+    networks:
+      - mangachan_net
+  imagorProd:
+    image: ghcr.io/cshum/imagor:latest
+    container_name: cache
+    volumes:
+      - ./:/mnt/data
+    environment:
+      PORT: 3333
+      IMAGOR_UNSAFE: 1 # unsafe URL for testing
+      # IMAGOR_SECRET: mydestiny # secret key for URL signature
+      # AWS_ACCESS_KEY_ID: igpEYA9im5reM9oBBFDG
+      # AWS_SECRET_ACCESS_KEY: mL4RCNekW5RcFNxbIJsa3KD99OGBYhFvl0qwK02Z
+      # AWS_REGION: Frankfurt-2
+      
+      FILE_LOADER_BASE_DIR: /mnt/data
+
+      FILE_STORAGE_BASE_DIR: /mnt/data/storage # enable file storage by specifying base dir
+      FILE_STORAGE_MKDIR_PERMISSION: 0755 # optional
+      FILE_STORAGE_WRITE_PERMISSION: 0666
+      FILE_RESULT_STORAGE_BASE_DIR: /mnt/data/result # enable file result storage by specifying base dir
+      FILE_RESULT_STORAGE_MKDIR_PERMISSION: 0755 # optional
+      FILE_RESULT_STORAGE_WRITE_PERMISSION: 0666 # optional 
+    ports:
+      - "3333:3333"
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    container_name: meilisearch
+    environment:
+      MEILI_ENV: 'production'  # Set the environment (can be 'production' or 'development')
+      MEILI_MASTER_KEY: 'wOk5BzIhew1eaSJf'  # Set the master key for admin access
+      MEILI_NO_ANALYTICS: 'true'  # Disable usage analytics
+    ports:
+      - "7700:7700"  # Expose the Meilisearch port
     networks:
       - mangachan_net
     volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
+      - meili_data:/meili_data  # Persist data to avoid losing it when the container restarts
+    restart: always  # Always restart the container unless it is explicitly stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  meilisearchadmin:
+    image: bjrnkuiper/meilisearch-admin:latest
+    container_name: meilisearchadmin
+    environment:
+      VITE_MEILI_HOST: 'http://meilisearch:7700'  # MeiliSearch host URL
+      VITE_MEILI_MASTER_KEY: 'wOk5BzIhew1eaSJf'  # Same as the MeiliSearch master key
     ports:
-      - "9000:9000" # MinIO API port
-      - "9001:9001" # MinIO console port
+      - "8080:8080"  # Expose MeiliSearchAdmin on port 8080
+    depends_on:
+      - meilisearch  # Ensure MeiliSearch starts before MeiliSearchAdmin
+    restart: always
+        
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: minio
+  #   environment:
+  #     MINIO_ROOT_USER: i3mk0TPcGg8AURfm2HRN
+  #     MINIO_ROOT_PASSWORD: RoCG6bHY3M8AtCWoG5pRjPRVesl5lCoI83PTd7LG
+  #   networks:
+  #     - mangachan_net
+  #   volumes:
+  #     - minio_data:/data
+  #   command: server /data --console-address ":9001"
+  #   ports:
+  #     - "9000:9000" # MinIO API port
+  #     - "9001:9001" # MinIO console port
+  
   imagor:
     image: ghcr.io/cshum/imagor:latest
     container_name: imagor
     environment:
-      IMAGOR_LOADER: "s3"
-      IMAGOR_S3_ENDPOINT: "localhost:9000"
-      IMAGOR_S3_REGION: "us-east-1"
-      IMAGOR_S3_BUCKET: "imagor-bucket"
-      IMAGOR_S3_ACCESS_KEY_ID: "i3mk0TPcGg8AURfm2HRN"
-      IMAGOR_S3_SECRET_ACCESS_KEY: "RoCG6bHY3M8AtCWoG5pRjPRVesl5lCoI83PTd7LG"
-      IMAGOR_S3_SAFE_CHARS: "/"
-      IMAGOR_S3_FORCE_PATH_STYLE: "true"
-      IMAGOR_STORAGE: "s3"
+      PORT: 8000
+      IMAGOR_UNSAFE: 1 # unsafe URL for testing
+
+      # FILE_LOADER_BASE_DIR: /mnt/data # enable file loader by specifying base dir
+
+      # FILE_STORAGE_BASE_DIR: /mnt/data # enable file storage by specifying base dir
+      # FILE_STORAGE_MKDIR_PERMISSION: 0755 # optional
+      # FILE_STORAGE_WRITE_PERMISSION: 0666 # optional
+      # FILE_STORAGE_EXPIRATION: 1m
+
+      # FILE_RESULT_STORAGE_BASE_DIR: /mnt/data/result # enable file result storage by specifying base dir
+      # FILE_RESULT_STORAGE_MKDIR_PERMISSION: 0755 # optional
+      # FILE_RESULT_STORAGE_WRITE_PERMISSION: 0666 # optional
+      # FILE_RESULT_STORAGE_EXPIRATION: 1m
+      
+    # volumes:
+    #   - ./:/mnt/data
+    networks:
+      - mangachan_net
     ports:
       - "8000:8000"
-    depends_on:
-      - minio
 networks:
   mangachan_net:
     driver: bridge  
@@ -89,4 +166,7 @@ volumes:
   arangodb_apps_data_container:
   keydb-data:
   pgdata:
+  rabbitmq_data:
   minio_data:
+  imagor:
+  meili_data:  

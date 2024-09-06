@@ -7,9 +7,8 @@ import (
 	"manga/internal/domain/dtos"
 	"manga/internal/domain/models"
 	"manga/internal/infra/pgsql/pgdb"
-	"manga/pkg/flake"
+	"manga/pkg"
 	"manga/pkg/logging"
-	"manga/pkg/tokenutil"
 	"manga/pkg/utils"
 	"time"
 
@@ -42,7 +41,7 @@ func (uc *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 
 	createTime := time.Now().UTC().UnixMilli()
 	//TODO - Generated Snow Flake ID
-	key, err := flake.GenerateID(1, 1, 1)
+	key, err := pkg.GenerateID(1, 1, 1)
 	if err != nil {
 		uc.Log.Error(logging.Snowflake, logging.CreatedID, err.Error(), nil)
 		return dtos.LoginResponse{}, "", err
@@ -85,7 +84,7 @@ func (uc *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 		UserID: utils.Int64ToStr(usr.UserID),
 		Email:  usr.Email, Role: []string{"1"}}
 
-	refreshToken, err := tokenutil.CreateRefreshToken(
+	refreshToken, err := pkg.CreateRefreshToken(
 		user, uc.Cfg.JWT.RefreshTokenSecret,
 		uc.Cfg.JWT.RefreshTokenExpireHour)
 	if err != nil {
@@ -103,7 +102,7 @@ func (uc *loginUsecase) Login(c context.Context, claims models.GoogleClaims) (dt
 	}
 
 	// TODO - Generated Access Token
-	accessToken, err := tokenutil.CreateAccessToken(
+	accessToken, err := pkg.CreateAccessToken(
 		user, uc.Cfg.JWT.RefreshTokenSecret,
 		uc.Cfg.JWT.RefreshTokenExpireHour)
 	if err != nil {
