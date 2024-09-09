@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"manga/internal/domain/dtos"
+	"manga/internal/domain/params"
 	"manga/pkg"
 
 	"github.com/meilisearch/meilisearch-go"
@@ -58,113 +60,66 @@ func (t *Manga) Delete(ctx context.Context, id string) error {
 
 // Search returns tasks matching a query.
 // nolint: funlen, cyclop
-// func (t *Task) Search(ctx context.Context, args internal.SearchParams) (internal.SearchResults, error) {
-// 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "Task.Search")
-// 	defer span.End()
+func (t *Manga) Search(ctx context.Context, args params.SearchParams) (any,any, error) {
+	// ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "Task.Search")
+	// defer span.End()
 
-// 	if args.IsZero() {
-// 		return internal.SearchResults{}, nil
-// 	}
+	// if args.IsZero() {
+	// 	return internal.SearchResults{}, nil
+	// }
 
-// 	should := make([]interface{}, 0, 3)
+	should := make(map[string]interface{})
 
-// 	if args.Description != nil {
-// 		should = append(should, map[string]interface{}{
-// 			"match": map[string]interface{}{
-// 				"description": *args.Description,
-// 			},
-// 		})
-// 	}
+	if args.Genre != nil {
+		should["genres.name"] = *args.Genre
+		
+	}
 
-// 	if args.Priority != nil {
-// 		should = append(should, map[string]interface{}{
-// 			"match": map[string]interface{}{
-// 				"priority": *args.Priority,
-// 			},
-// 		})
-// 	}
+	if args.Status != nil {
+		should["status"] = *args.Status
+		
+	}
 
-// 	if args.IsDone != nil {
-// 		should = append(should, map[string]interface{}{
-// 			"match": map[string]interface{}{
-// 				"is_done": *args.IsDone,
-// 			},
-// 		})
-// 	}
+	if args.Type != nil {
+		should["type"] = *args.Status
+	}
 
-// 	var query map[string]interface{}
+	idx := t.client.Index(t.index)
+    fmt.Print(should)
+	resp, err := idx.SearchWithContext(ctx,*args.Query,&meilisearch.SearchRequest{
+		Offset: 0,
+		Limit: 20,
+		Filter: "genre.name IN [Action,Fantasy] AND type IN [Manga]",
+	})
+	if err != nil {
+		return nil,nil, pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "SearchRequest.Do")
+	}
+	
+	// //nolint: tagliatelle
+	// var hits struct {
+	// 	Hits struct {
+	// 		Total struct {
+	// 			Value int64 `json:"value"`
+	// 		} `json:"total"`
+	// 		Hits []struct {
+	// 			Source indexedTask `json:"_source"`
+	// 		} `json:"hits"`
+	// 	} `json:"hits"`
+	// }
 
-// 	if len(should) > 1 {
-// 		query = map[string]interface{}{
-// 			"query": map[string]interface{}{
-// 				"bool": map[string]interface{}{
-// 					"should": should,
-// 				},
-// 			},
-// 		}
-// 	} else {
-// 		query = map[string]interface{}{
-// 			"query": should[0],
-// 		}
-// 	}
+	// if err := json.NewDecoder(resp.Body).Decode(&hits); err != nil {
+	// 	return internal.SearchResults{}, internal.WrapErrorf(err, internal.ErrorCodeUnknown, "json.NewDecoder.Decode")
+	// }
 
-// 	query["sort"] = []interface{}{
-// 		"_score",
-// 		map[string]interface{}{"id": "asc"},
-// 	}
+	// res := make([]internal.Task, len(hits.Hits.Hits))
 
-// 	query["from"] = args.From
-// 	query["size"] = args.Size
+	// for i, hit := range hits.Hits.Hits {
+	// 	res[i].ID = hit.Source.ID
+	// 	res[i].Description = hit.Source.Description
+	// 	res[i].Priority = hit.Source.Priority
+	// 	res[i].Dates.Due = time.Unix(0, hit.Source.DateDue).UTC()
+	// 	res[i].Dates.Start = time.Unix(0, hit.Source.DateStart).UTC()
+	// }
 
-// 	var buf bytes.Buffer
-// meilisearch
-// 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-// 		return internal.SearchResults{}, internal.WrapErrorf(err, internal.ErrorCodeUnknown, "json.NewEncoder.Encode")
-// 	}
-
-// 	req := esv7api.SearchRequest{
-// 		Index: []string{t.index},
-// 		Body:  &buf,
-// 	}
-
-// 	resp, err := req.Do(ctx, t.client)
-// 	if err != nil {
-// 		return internal.SearchResults{}, internal.WrapErrorf(err, internal.ErrorCodeUnknown, "SearchRequest.Do")
-// 	}
-// 	defer resp.Body.Close()
-
-// 	if resp.IsError() {
-// 		return internal.SearchResults{}, internal.NewErrorf(internal.ErrorCodeUnknown, "SearchRequest.Do %d", resp.StatusCode)
-// 	}
-
-// 	//nolint: tagliatelle
-// 	var hits struct {
-// 		Hits struct {
-// 			Total struct {
-// 				Value int64 `json:"value"`
-// 			} `json:"total"`
-// 			Hits []struct {
-// 				Source indexedTask `json:"_source"`
-// 			} `json:"hits"`
-// 		} `json:"hits"`
-// 	}
-
-// 	if err := json.NewDecoder(resp.Body).Decode(&hits); err != nil {
-// 		return internal.SearchResults{}, internal.WrapErrorf(err, internal.ErrorCodeUnknown, "json.NewDecoder.Decode")
-// 	}
-
-// 	res := make([]internal.Task, len(hits.Hits.Hits))
-
-// 	for i, hit := range hits.Hits.Hits {
-// 		res[i].ID = hit.Source.ID
-// 		res[i].Description = hit.Source.Description
-// 		res[i].Priority = hit.Source.Priority
-// 		res[i].Dates.Due = time.Unix(0, hit.Source.DateDue).UTC()
-// 		res[i].Dates.Start = time.Unix(0, hit.Source.DateStart).UTC()
-// 	}
-
-// 	return internal.SearchResults{
-// 		Tasks: res,
-// 		Total: hits.Hits.Total.Value,
-// 	}, nil
-// }
+	return resp.Hits, nil,nil
+}

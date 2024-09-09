@@ -1,0 +1,1 @@
+{"level":"error","ts":"2024-09-08T13:39:31.173+0700","caller":"repository/uow_repository.go:229","msg":"Failed to publish to RabbitMQ: <nil>","AppName":"MyApp","LoggerName":"Zaplog","Category":"Rabbit","SubCategory":"Publish","stacktrace":"manga/internal/infra/pgsql/repository.UploadProcess\n\tE:/Komik/internal/infra/pgsql/repository/uow_repository.go:229"}

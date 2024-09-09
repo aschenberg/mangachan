@@ -15,7 +15,7 @@ const createManga = `-- name: CreateManga :one
 INSERT INTO manga (
   	manga_id,
 	title,
-	title_en,
+	titles,
   	synonyms,
 	cover_id,
 	type,
@@ -32,7 +32,7 @@ RETURNING manga_id,title
 type CreateMangaParams struct {
 	MangaID   int64
 	Title     string
-	TitleEn   pgtype.Text
+	Titles    []string
 	Synonyms  []string
 	CoverID   int64
 	Type      string
@@ -51,7 +51,7 @@ func (q *Queries) CreateManga(ctx context.Context, arg CreateMangaParams) (Creat
 	row := q.db.QueryRow(ctx, createManga,
 		arg.MangaID,
 		arg.Title,
-		arg.TitleEn,
+		arg.Titles,
 		arg.Synonyms,
 		arg.CoverID,
 		arg.Type,
@@ -66,7 +66,7 @@ func (q *Queries) CreateManga(ctx context.Context, arg CreateMangaParams) (Creat
 }
 
 const findMangaByID = `-- name: FindMangaByID :one
-SELECT manga_id, title, title_en, synonyms, a.cover_id, type, country, status, a.created_at, a.updated_at, detail_id, published, authors, artist, source, summary, b.updated_at, b.created_at, score_id, score, c.created_at, c.updated_at, d.cover_id, cover_detail, thumbnail, extra, d.created_at, d.updated_at FROM manga AS a 
+SELECT manga_id, title, titles, synonyms, a.cover_id, type, country, status, a.created_at, a.updated_at, detail_id, published, authors, artist, source, summary, b.updated_at, b.created_at, score_id, score, c.created_at, c.updated_at, d.cover_id, cover_detail, thumbnail, extra, d.created_at, d.updated_at FROM manga AS a 
 LEFT JOIN manga_detail AS b ON a.manga_id = b.detail_id 
 LEFT JOIN manga_score AS c ON a.manga_id = c.score_id
 LEFT JOIN manga_cover AS d ON a.manga_id = d.cover_id
@@ -76,7 +76,7 @@ WHERE a.manga_id = $1 LIMIT 1
 type FindMangaByIDRow struct {
 	MangaID     int64
 	Title       string
-	TitleEn     pgtype.Text
+	Titles      []string
 	Synonyms    []string
 	CoverID     int64
 	Type        string
@@ -110,7 +110,7 @@ func (q *Queries) FindMangaByID(ctx context.Context, mangaID int64) (FindMangaBy
 	err := row.Scan(
 		&i.MangaID,
 		&i.Title,
-		&i.TitleEn,
+		&i.Titles,
 		&i.Synonyms,
 		&i.CoverID,
 		&i.Type,

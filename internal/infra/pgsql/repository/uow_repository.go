@@ -3,11 +3,9 @@ package pgsql
 import (
 	"context"
 	"fmt"
-	"log"
 	"manga/config"
 	"manga/internal/domain"
 	"manga/internal/domain/dtos"
-	"manga/internal/domain/models"
 	"manga/internal/infra/pgsql"
 	"manga/internal/infra/pgsql/pgdb"
 	"manga/internal/infra/rabbitmq"
@@ -45,11 +43,11 @@ func NewUOWRepository(pg *pkg.Postgres, cfg *config.Config, minioC *minio.Client
 	}
 }
 
-func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dtos.CreatedMangaResponse, error) {
+func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dtos.CreateManga, error) {
 	tx, err := rp.pgx.Begin(c)
 	if err != nil {
 		rp.Log.Error(logging.Postgres, logging.CreateTx, err.Error(), nil)
-		return dtos.CreatedMangaResponse{}, err
+		return dtos.CreateManga{}, err
 	}
 
 	qtx := rp.q.WithTx(tx)
@@ -59,7 +57,7 @@ func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dto
 	if err != nil {
 		rp.Log.Error(logging.Snowflake, logging.CreatedID, err.Error(), nil)
 		tx.Rollback(c)
-		return dtos.CreatedMangaResponse{}, err
+		return dtos.CreateManga{}, err
 	}
 	// - Generate Time
 	createTime := time.Now().UTC().UnixMilli()
@@ -68,9 +66,7 @@ func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dto
 	create := pgdb.CreateMangaParams{
 		MangaID: key,
 		Title:   u.Title,
-		TitleEn: pgtype.Text{
-			String: u.TitleEnglish,
-			Valid:  utils.StrIsEmpty(u.TitleEnglish)},
+		Titles:  u.Titles,
 		Synonyms: u.Synonyms,
 		Type:     u.Type,
 		Country:  u.Country,
@@ -83,24 +79,24 @@ func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dto
 	mg, err := qtx.CreateManga(c, create)
 	if err != nil {
 		if err == pgsql.ErrRecordNotFound {
-			return dtos.CreatedMangaResponse{MangaID: 0, Title: ""}, nil
+			return dtos.CreateManga{}, nil
 		}
 		tx.Rollback(c)
 		rp.Log.Error(logging.Postgres, logging.Insert, err.Error(), nil)
-		return dtos.CreatedMangaResponse{}, err
+		return dtos.CreateManga{}, err
 	}
-	u.MangaID = utils.Int64ToStr(mg.MangaID)
+
 	// - Created Genre when non exist
 	for _, str := range u.Genres {
 		key, err := pkg.GenerateID(1, 3, 1)
 		if err != nil {
 			rp.Log.Error(logging.Snowflake, logging.CreatedID, err.Error(), nil)
-			return dtos.CreatedMangaResponse{}, err
+			return dtos.CreateManga{}, err
 		}
 
 		cgp := pgdb.CreateGenreParams{
 			GenreID:   key,
-			Title:     str,
+			Title:     str.Name,
 			CreatedAt: createTime,
 			UpdatedAt: createTime,
 		}
@@ -108,17 +104,17 @@ func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dto
 		if err != nil {
 			tx.Rollback(c)
 			rp.Log.Error(logging.Postgres, logging.Insert, err.Error(), nil)
-			return dtos.CreatedMangaResponse{}, err
+			return dtos.CreateManga{}, err
 		}
 		time.Sleep(1 * time.Millisecond)
 	}
 
 	// Find Genre ID by Tittle
-	genreIds, err := qtx.FindGenreByTitle(c, u.Genres)
+	genreIds, err := qtx.FindGenreByTitle(c, dtos.MguMap(u.Genres,"Name"))
 	if err != nil {
 		tx.Rollback(c)
 		rp.Log.Error(logging.Postgres, logging.Select, err.Error(), nil)
-		return dtos.CreatedMangaResponse{}, err
+		return dtos.CreateManga{}, err
 	}
 
 	// Insert Manga Genres
@@ -127,7 +123,7 @@ func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dto
 		if err != nil {
 			tx.Rollback(c)
 			rp.Log.Error(logging.Snowflake, logging.CreatedID, err.Error(), nil)
-			return dtos.CreatedMangaResponse{}, err
+			return dtos.CreateManga{}, err
 		}
 		cmgp := pgdb.CreateMangaGenreParams{
 			MgID:      key,
@@ -140,7 +136,7 @@ func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dto
 		if err != nil {
 			tx.Rollback(c)
 			rp.Log.Error(logging.Postgres, logging.Insert, err.Error(), nil)
-			return dtos.CreatedMangaResponse{}, err
+			return dtos.CreateManga{}, err
 		}
 		time.Sleep(1 * time.Millisecond)
 	}
@@ -163,7 +159,7 @@ func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dto
 	if err != nil {
 		tx.Rollback(c)
 		rp.Log.Error(logging.Postgres, logging.Insert, err.Error(), nil)
-		return dtos.CreatedMangaResponse{}, err
+		return dtos.CreateManga{}, err
 	}
 
 	// Insert Manga Score
@@ -177,36 +173,27 @@ func (rp *uowRepository) CreateManga(c context.Context, u dtos.CreateManga) (dto
 	if err != nil {
 		tx.Rollback(c)
 		rp.Log.Error(logging.Postgres, logging.Insert, err.Error(), nil)
-		return dtos.CreatedMangaResponse{}, err
+		return dtos.CreateManga{}, err
 	}
 	tx.Commit(c)
-	// Create a channel to receive the result of the background task
-	done := make(chan models.Result)
-	// Run the background goroutine to upload the image
-	go UploadProcess(rp, u, done)
-
-	// Handle the result when the background task is complete
-	go func() {
-		result := <-done
-
-		// Publish the result to RabbitMQ
-		if (result.Status == "fail") {
-			log.Printf("Failed to publish to RabbitMQ: %v", err)
-		} else {
-			
-
-			log.Printf("Successfully published %s to RabbitMQ", result.Status)
-		}
-	}()
-	return dtos.CreatedMangaResponse{MangaID: mg.MangaID, Title: mg.Title}, nil
+	u.MangaID = utils.Int64ToStr(mg.MangaID)
+	return u, nil
 }
 
-func UploadProcess(rp *uowRepository, cm dtos.CreateManga, done chan<- models.Result) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+func (rp *uowRepository) UpdateCover(c context.Context, u dtos.CreateManga) error{
+	// Run the background goroutine to upload the image
+	go UploadProcess(rp, u)
+
+	return nil
+}
+
+func UploadProcess(rp *uowRepository, cm dtos.CreateManga)(bool,error ){
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	success := true
 	// Upload Cover Full
+	
 	filePath := fmt.Sprintf("%s/%s.webp", cm.MangaID, cm.MangaID)
 	success, err := UploadToStorage(ctx, rp.cfg, rp.minioC, cm.Cover.CoverDetail, rp.cfg.Minio.Bucket1, filePath)
 	if err != nil {
@@ -236,11 +223,27 @@ func UploadProcess(rp *uowRepository, cm dtos.CreateManga, done chan<- models.Re
 
 	}
 
-	if success {
-		done <- models.Result{Status: "done"}
-	} else {
-		done <- models.Result{Status: "fail"}
+	if !success {
+		rp.Log.Error(logging.Rabbit,logging.Publish,fmt.Sprintf("Failed to publish to RabbitMQ: %v", err),nil)
+		return false, pkg.NewErrorf(pkg.ErrorCodeUnknown,fmt.Sprintf("Failed to publish to RabbitMQ: %v", err))
+	
+	} 
+	idxMg:= dtos.IndexedManga{
+		ID: cm.MangaID,
+		Title: cm.Title,
+		Titles: cm.Titles,
+		Synonyms: cm.Synonyms,
+		Type: cm.Type,
+		Genres: cm.Genres,
+	   Cover: thumbPath,
+	   Status: cm.Status,
+	   Score: cm.Score,
 	}
+	  err = rp.rmq.CreatedManga(ctx,idxMg)
+	  if err != nil{
+		rp.Log.Error(logging.Rabbit,logging.Publish,fmt.Sprintf("Failed to publish to MeiliSearch:: %v", err),nil)
+	  }
+	  return true, nil
 }
 
 func UploadToStorage(ctx context.Context, cfg *config.Config, minioC *minio.Client, source string, bucket string, filePath string) (bool, error) {

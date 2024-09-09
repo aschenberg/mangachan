@@ -2,7 +2,7 @@
 INSERT INTO manga (
   	manga_id,
 	title,
-	title_en,
+	titles,
   	synonyms,
 	cover_id,
 	type,

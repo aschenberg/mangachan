@@ -105,6 +105,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    command: ["bash", "-c", "/usr/src/setup.sh && /bin/meilisearch"]
   meilisearchadmin:
     image: bjrnkuiper/meilisearch-admin:latest
     container_name: meilisearchadmin

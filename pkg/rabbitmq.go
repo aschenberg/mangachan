@@ -21,7 +21,7 @@ func failOnError(err error, msg string) {
 }
 
 // NewRabbitMQ instantiates the RabbitMQ instances using configuration defined in environment variables.
-func NewRabbitMQ(cfg *config.Config, queueNames ...string) (*RabbitMQ, error) {
+func NewRabbitMQ(cfg *config.Config,) (*RabbitMQ, error) {
 	url := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		cfg.RabbitMq.User,
 		cfg.RabbitMq.Password,
@@ -64,45 +64,45 @@ func NewRabbitMQ(cfg *config.Config, queueNames ...string) (*RabbitMQ, error) {
 	}, nil
 }
 
-// Publish sends a message to a specified RabbitMQ queue
-func (r *RabbitMQ) Publish(queueName, body string) error {
+// // Publish sends a message to a specified RabbitMQ queue
+// func (r *RabbitMQ) Publish( body string) error {
 
-	err := r.Channel.Publish(
-		"",      // exchange
-		"manga", // routing key
-		false,   // mandatory
-		false,   // immediate
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(body),
-		})
-	return err
-}
+// 	err := r.Channel.Publish(
+// 		"",      // exchange
+// 		"manga", // routing key
+// 		false,   // mandatory
+// 		false,   // immediate
+// 		amqp.Publishing{
+// 			ContentType: "text/plain",
+// 			Body:        []byte(body),
+// 		})
+// 	return err
+// }
 
-// Consume listens for messages from a specified RabbitMQ queue and processes them with a handler
-func (r *RabbitMQ) Consume(queueName string, handler func(amqp.Delivery)) error {
+// // Consume listens for messages from a specified RabbitMQ queue and processes them with a handler
+// func (r *RabbitMQ) Consume(queueName string, handler func(amqp.Delivery)) error {
 
-	msgs, err := r.Channel.Consume(
-		queueName, // queue
-		"",        // consumer
-		true,      // auto-ack
-		false,     // exclusive
-		false,     // no-local
-		false,     // no-wait
-		nil,       // args
-	)
-	if err != nil {
-		return err
-	}
+// 	msgs, err := r.Channel.Consume(
+// 		queueName, // queue
+// 		"",        // consumer
+// 		true,      // auto-ack
+// 		false,     // exclusive
+// 		false,     // no-local
+// 		false,     // no-wait
+// 		nil,       // args
+// 	)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	go func() {
-		for d := range msgs {
-			handler(d)
-		}
-	}()
+// 	go func() {
+// 		for d := range msgs {
+// 			handler(d)
+// 		}
+// 	}()
 
-	return nil
-}
+// 	return nil
+// }
 
 // Close ...
 func (r *RabbitMQ) Close() {

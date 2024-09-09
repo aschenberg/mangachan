@@ -6,6 +6,6 @@ import (
 )
 
 type IUOWRepository interface {
-	CreateManga(c context.Context, u dtos.CreateManga) (dtos.CreatedMangaResponse, error)
-	// FindById(c context.Context, id string) (models.Manga, error)
+	CreateManga(c context.Context, u dtos.CreateManga) (dtos.CreateManga, error)
+	UpdateCover(c context.Context, u dtos.CreateManga) error
 }

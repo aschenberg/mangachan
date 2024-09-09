@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type CasbinRule struct {
+	ID    int32
+	Ptype pgtype.Text
+	V0    pgtype.Text
+	V1    pgtype.Text
+	V2    pgtype.Text
+	V3    pgtype.Text
+	V4    pgtype.Text
+	V5    pgtype.Text
+}
+
 type Genre struct {
 	GenreID   int64
 	Title     string
@@ -18,7 +29,7 @@ type Genre struct {
 type Manga struct {
 	MangaID   int64
 	Title     string
-	TitleEn   pgtype.Text
+	Titles    []string
 	Synonyms  []string
 	CoverID   int64
 	Type      string

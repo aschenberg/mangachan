@@ -40,16 +40,18 @@ func main() {
 }
 
 func run(cfg *config.Config) (<-chan error, error)  {
-	log := logging.NewLogger(cfg)
+	logger := logging.NewLogger(cfg)
 
 	rmq,err:= pkg.NewRabbitMQ(cfg)
 	if err != nil {
 		return nil, pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "internal.newRabbitMQ")
 	}
+	meiliC := pkg.NewMeili(cfg)
+
 	srv := &Server{
-		log: log,
+		logger: logger,
 		rmq:rmq,
-	
+	meili: meili.NewManga(meiliC),
 		done:   make(chan struct{}),
 	}
 
@@ -63,7 +65,7 @@ func run(cfg *config.Config) (<-chan error, error)  {
 		go func() {
 			<-ctx.Done()
 	
-			log.Info(logging.General,logging.Shutdown,"Shutdown signal received",nil)
+			logger.Info(logging.General,logging.Shutdown,"Shutdown signal received",nil)
 	
 			ctxTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	
@@ -80,11 +82,11 @@ func run(cfg *config.Config) (<-chan error, error)  {
 				errC <- err
 			}
 	
-			log.Info(logging.General,logging.Shutdown,"Shutdown completed",nil)
+			logger.Info(logging.General,logging.Shutdown,"Shutdown completed",nil)
 		}()
 	
 		go func() {
-			log.Info(logging.General,logging.Startup,"Listening and serving",nil)
+			logger.Info(logging.General,logging.Startup,"Listening and serving",nil)
 	
 			if err := srv.ListenAndServe(); err != nil {
 				errC <- err
@@ -97,7 +99,7 @@ func run(cfg *config.Config) (<-chan error, error)  {
 
 
 type Server struct {
-	log    logging.Logger
+	logger    logging.Logger
 	rmq    *pkg.RabbitMQ
 	meili  *meili.Manga
 	done   chan struct{}
@@ -115,7 +117,7 @@ func (s *Server) ListenAndServe() error {
 	if err != nil {
 		return pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "channel.QueueDeclare")
 	}
-
+    fmt.Print("start")
 	err = s.rmq.Channel.QueueBind(
 		queue.Name,      // queue name
 		"tasks.event.*", // routing key
@@ -142,8 +144,7 @@ func (s *Server) ListenAndServe() error {
 
 	go func() {
 		for msg := range msgs {
-			s.log.Info(logging.Rabbit,logging.Received,fmt.Sprintf("Received message: %s", msg.RoutingKey),nil)
-
+			s.logger.Info(logging.Rabbit,logging.Received,fmt.Sprintf("Received message: %s", msg.RoutingKey),nil)
 			var nack bool
 
 			// XXX: Instrumentation to be added in a future episode
@@ -155,7 +156,6 @@ func (s *Server) ListenAndServe() error {
 				if err != nil {
 					return
 				}
-
 				if err := s.meili.Index(context.Background(), task); err != nil {
 					nack = true
 				}
@@ -173,17 +173,17 @@ func (s *Server) ListenAndServe() error {
 			}
 
 			if nack {
-				s.log.Info(logging.Rabbit,logging.Received,"NAcking :(",nil)
+				s.logger.Info(logging.Rabbit,logging.Received,"NAcking :(",nil)
 
 				_ = msg.Nack(false, nack)
 			} else {
-				s.log.Info(logging.Rabbit,logging.Received,"Acking :)",nil)
+				s.logger.Info(logging.Rabbit,logging.Received,"Acking :)",nil)
 
 				_ = msg.Ack(false)
 			}
 		}
 
-		s.log.Info(logging.Rabbit,logging.Received,"No more messages to consume. Exiting.",nil)
+		s.logger.Info(logging.Rabbit,logging.Received,"No more messages to consume. Exiting.",nil)
 
 		s.done <- struct{}{}
 	}()
@@ -194,7 +194,7 @@ func (s *Server) ListenAndServe() error {
 
 // Shutdown ...
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.log.Info(logging.General,logging.Shutdown,"Shutting down server",nil)
+	s.logger.Info(logging.General,logging.Shutdown,"Shutting down server",nil)
 
 	_ = s.rmq.Channel.Cancel(rabbitMQConsumerName, false)
 

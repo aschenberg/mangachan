@@ -4,6 +4,7 @@ import (
 	"manga/api/helper"
 	"manga/internal/domain/dtos"
 	"manga/internal/domain/enum"
+	"manga/internal/domain/params"
 	"manga/internal/usecase"
 	"net/http"
 	"sort"
@@ -35,7 +36,7 @@ func (h *MangaHandler) Create(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, helper.GenerateBaseResponseWithAnyError(nil, false, helper.InternalError, err.Error()))
 		return
 	}
-	if res.MangaID == 0 {
+	if res.MangaID == "0" {
 		c.JSON(http.StatusConflict, helper.GenerateBaseResponse(res, true, helper.Success))
 		return
 	}
@@ -68,15 +69,18 @@ func (h *MangaHandler) GetById(c *gin.Context) {
 
 }
 
-// func (h *MangaHandler) FindByID(c *gin.Context) {
-// 	var err error
-// 	id := c.Param("id")
+func (h *MangaHandler) Find(c *gin.Context) {
+	query := c.Query("search")
+	genre := c.QueryArray("genre")
+	status  := c.QueryArray("status")
+	typeManga := c.QueryArray("type")
 
-// 	result, err := h.MangaUsecase.FindById(c, id)
-// 	if err != nil {
-// 		api.RenderErrorResponse(c, "An error occurred: ",
-// 			pkg.WrapErrorf(err, pkg.ErrorCodeUnknown, "An error occurred: "+err.Error()))
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, dtos.SuccessResponse{Message: "created successfuly", Data: result})
-// }
+    res, _ ,err := h.mu.Find(c, params.SearchParams{Type: &typeManga,Query:&query,Genre: &genre,Status: &status })
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helper.GenerateBaseResponseWithAnyError(nil, false, helper.InternalError, err.Error()))
+		return
+	}
+	
+	
+	c.JSON(http.StatusOK, dtos.SuccessResponse{Message: "created successfuly", Data: res})
+}
